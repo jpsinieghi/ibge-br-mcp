@@ -29,6 +29,4 @@ coverage/
 # yarn.lock
 
 # MCP Registry
-.mcpregistry_github_token
-.mcpregistry_registry_token
 mcp-publisher.exe
