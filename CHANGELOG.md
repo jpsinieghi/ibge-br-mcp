@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Roadmap item 1.3 (parameter consistency) is now complete.
 
+### Tests
+- Raised coverage of the priority data tools well past the ≥50% target
+  (`sidra` 0→86%, `malhas` 0→95%, `indicadores` 53→87%, `censo` 51→81%, plus
+  `datasaude` 16→88%): URL building, table/JSON formatting, number formatting,
+  parameter validation, and graceful handling of empty results vs upstream
+  failures. Adds a shared `tests/helpers.ts` mock helper. Suite: 253 → 290 tests
+  (roadmap item 1.5).
+
 ### Fixed
 - `ibge_censo`, `ibge_datasaude` and `ibge_indicadores` now **validate**
   `nivel_territorial` against their supported levels and return a clear

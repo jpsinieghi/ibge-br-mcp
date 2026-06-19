@@ -86,9 +86,22 @@ receba uma resposta que ele consiga usar sem desperdiçar contexto.
 - [ ] Timeout de requisição configurável
 
 ### 1.5 Confiabilidade (a base da usabilidade)
-- [ ] Elevar cobertura de teste das tools (alvo: ≥50%), priorizando
+- [x] Elevar cobertura de teste das tools (alvo: ≥50%), priorizando
       `sidra.ts`, `indicadores.ts`, `censo.ts`, `malhas.ts`
-- [ ] Tratamento gracioso de falhas/instabilidade das APIs upstream
+- [x] Tratamento gracioso de falhas/instabilidade das APIs upstream
+
+> Resolução:
+> - Tools prioritários muito acima do alvo: `sidra` 0→86%, `malhas` 0→95%,
+>   `indicadores` 53→87%, `censo` 51→81%; bônus `datasaude` 16→88% (tocado nesta
+>   fase). Suíte: 253→290 testes. Helper de mock compartilhado em `tests/helpers.ts`.
+> - Testes afirmam o tratamento gracioso já existente: distinção "sem dado" vs
+>   falha real, `parseHttpError` com tools relacionadas, e rejeição de input
+>   inválido sem chamar a API.
+> - **Cauda longa em aberto** (não bloqueante): vários tools seguem com baixa/zero
+>   cobertura — `geocodigo`, `vizinhos`, `cnae`, `comparar`, `nomes`, `populacao`,
+>   `pesquisas`, `sidra-metadados`, `sidra-tabelas`, `malhas-tema`, `cidades`,
+>   `paises`. Candidatos a uma 2ª passada de cobertura. `geocodigo`/`vizinhos`
+>   foram alterados na fase 1.3 e merecem testes de tool em breve.
 
 ### 1.6 Capacidades do protocolo MCP (estado da arte)
 - [ ] **Resources**: expor catálogos de referência (tabelas SIDRA, níveis
