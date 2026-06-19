@@ -45,10 +45,10 @@ receba uma resposta que ele consiga usar sem desperdiçar contexto.
 - [ ] Limitar/paginar respostas grandes (ex.: SIDRA) com orientação de continuação
 - [ ] Seleção de campos onde fizer sentido reduzir volume
 
-### 1.3 Consistência de parâmetros
+### 1.3 Consistência de parâmetros ✅
 - [x] Unificar formatos de data entre todas as tools (IBGE e BCB)
 - [x] Normalizar entrada de localidade (sigla, nome ou código intercambiáveis)
-- [ ] Padronizar nomenclatura de níveis territoriais
+- [x] Padronizar nomenclatura de níveis territoriais
 
 > Resolução do item de datas:
 > - Formato canônico adotado: **`DD/MM/AAAA`** (brasileiro), aceitando também
@@ -71,9 +71,14 @@ receba uma resposta que ele consiga usar sem desperdiçar contexto.
 >   localmente (`ibge_vizinhos`, `ibge_geocodigo`, `ibge_municipios(busca=)`);
 >   unificá-la num helper único é candidato futuro, não bloqueante.
 >
-> Restante do 1.3:
-> - **Níveis territoriais:** padronizar a nomenclatura/uso de níveis (SIDRA e
->   afins) entre as tools — único subitem em aberto.
+> Resolução do item de níveis territoriais:
+> - Labels canônicos curtos em `TERRITORIAL_LEVEL_LABELS` + helpers
+>   `territorialLevelHint`/`territorialLevelList` em `config.ts` geram todas as
+>   descrições e sugestões de erro de `nivel_territorial`. Fim da divergência de
+>   nomenclatura ("Grande Região" vs "Região") e de listas incompletas.
+> - `ibge_sidra`/`ibge_censo`/`ibge_datasaude`/`ibge_indicadores` declaram os
+>   níveis que de fato suportam e **validam** a entrada (antes os três últimos
+>   repassavam nível inválido direto à API SIDRA).
 
 ### 1.4 Erros que ensinam
 - [ ] Mensagens de erro que sugerem a correção e a tool correta

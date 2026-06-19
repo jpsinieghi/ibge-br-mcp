@@ -14,7 +14,7 @@ import {
   REGION_CODES,
   UF_SIGLAS,
 } from "../src/validation.js";
-import { resolveUf } from "../src/config.js";
+import { resolveUf, territorialLevelHint, territorialLevelList } from "../src/config.js";
 
 describe("isValidIbgeCode", () => {
   describe("region codes (1 digit)", () => {
@@ -146,6 +146,23 @@ describe("resolveUf", () => {
     expect(resolveUf("99")).toBeNull();
     expect(resolveUf("")).toBeNull();
     expect(resolveUf("Pindorama")).toBeNull();
+  });
+});
+
+describe("territorialLevelHint / territorialLevelList", () => {
+  it("builds a standardized description from supported codes", () => {
+    expect(territorialLevelHint(["1", "2", "3", "6"])).toBe(
+      "Nível territorial (código N): 1=Brasil, 2=Região, 3=UF, 6=Município"
+    );
+  });
+
+  it("builds a código (Label) list for error suggestions", () => {
+    expect(territorialLevelList(["1", "2", "3"])).toBe("1 (Brasil), 2 (Região), 3 (UF)");
+  });
+
+  it("uses consistent labels across tools (no Grande Região / Região drift)", () => {
+    expect(territorialLevelHint(["2"])).toContain("2=Região");
+    expect(territorialLevelHint(["7"])).toContain("7=Região Metropolitana");
   });
 });
 

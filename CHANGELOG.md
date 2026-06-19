@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Standardized territorial-level (`nivel_territorial`) nomenclature** across
+  `ibge_sidra`, `ibge_censo`, `ibge_datasaude` and `ibge_indicadores`. A single
+  `territorialLevelHint`/`territorialLevelList` helper in `config.ts` (backed by
+  `TERRITORIAL_LEVEL_LABELS`) now generates every level description and error
+  suggestion, ending naming drift (e.g. "Grande Região" vs "Região") and the
+  inconsistent/incomplete level lists. Each tool now declares the levels it
+  actually supports (roadmap item 1.3 — completes 1.3).
+
 - **Unified locality (UF) input** across `ibge_municipios`, `ibge_vizinhos` and
   `ibge_geocodigo`: a state can now be given by sigla (`SP`), name (`São Paulo`,
   accent/case-insensitive) or IBGE code (`35`) interchangeably. New single
@@ -22,7 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   results. New helpers `parseUserDate` / `toBcbDate` / `toIbgeApiDate` in
   `validation.ts` centralize this (roadmap item 1.3).
 
+  Roadmap item 1.3 (parameter consistency) is now complete.
+
 ### Fixed
+- `ibge_censo`, `ibge_datasaude` and `ibge_indicadores` now **validate**
+  `nivel_territorial` against their supported levels and return a clear
+  "Nível territorial inválido" message, instead of forwarding an unsupported
+  level straight to the SIDRA API.
 - `ibge_calendario` now reads the real IBGE API fields (`data_divulgacao`,
   `nome_produto`): month grouping and the date column previously rendered `NaN`
   because the code referenced non-existent `data_inicio`/`produto` fields.

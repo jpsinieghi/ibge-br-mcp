@@ -140,11 +140,14 @@ Também são aceitos DD-MM-AAAA e o formato ISO AAAA-MM-DD.`,
         : "Use 'last' para o último período disponível ou especifique um ano.",
     }),
 
-  invalidTerritory: (level: string, tool: string): string =>
+  invalidTerritory: (level: string, tool: string, validLevels?: string): string =>
     formatError({
       message: `Nível territorial inválido: "${level}"`,
       tool,
-      suggestion: `Níveis válidos: 1 (Brasil), 2 (Região), 3 (UF), 6 (Município), etc.
+      suggestion: validLevels
+        ? `Níveis válidos: ${validLevels}.
+Use ibge_sidra_metadados para ver os níveis disponíveis para cada tabela.`
+        : `Níveis válidos: 1 (Brasil), 2 (Região), 3 (UF), 6 (Município), etc.
 Use ibge_sidra_metadados para ver os níveis disponíveis para cada tabela.`,
     }),
 };

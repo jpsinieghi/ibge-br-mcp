@@ -3,6 +3,11 @@ import { IBGE_API } from "../types.js";
 import { cacheKey, CACHE_TTL, cachedFetch } from "../cache.js";
 import { withMetrics } from "../metrics.js";
 import { createMarkdownTable, formatNumber } from "../utils/index.js";
+import { ValidationErrors } from "../errors.js";
+import { territorialLevelHint, territorialLevelList } from "../config.js";
+
+// These aggregates are published down to UF level (no municipal breakdown).
+const INDICADORES_NIVEIS = ["1", "2", "3"];
 
 // Common indicators with their SIDRA tables
 const INDICADORES_CONHECIDOS: Record<
@@ -165,7 +170,7 @@ Use "listar" para ver todos os indicadores disponíveis.`),
     .string()
     .optional()
     .default("1")
-    .describe("Nível territorial: 1=Brasil, 2=Região, 3=UF"),
+    .describe(territorialLevelHint(INDICADORES_NIVEIS)),
   localidades: z.string().optional().default("all").describe("Códigos das localidades ou 'all'"),
   periodos: z
     .string()
@@ -207,11 +212,20 @@ export async function ibgeIndicadores(input: IndicadoresInput): Promise<string> 
       );
     }
 
+    const nivel = input.nivel_territorial ?? "1";
+    if (!INDICADORES_NIVEIS.includes(nivel)) {
+      return ValidationErrors.invalidTerritory(
+        nivel,
+        "ibge_indicadores",
+        territorialLevelList(INDICADORES_NIVEIS)
+      );
+    }
+
     try {
       // Build SIDRA URL
       const url = buildSidraUrl(
         indicador.tabela,
-        input.nivel_territorial ?? "1",
+        nivel,
         input.localidades ?? "all",
         input.periodos ?? "last",
         indicador.variavel

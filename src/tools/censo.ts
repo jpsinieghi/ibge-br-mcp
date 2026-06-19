@@ -4,6 +4,10 @@ import { cacheKey, CACHE_TTL, cachedFetch } from "../cache.js";
 import { withMetrics } from "../metrics.js";
 import { createMarkdownTable, formatNumber } from "../utils/index.js";
 import { parseHttpError, ValidationErrors } from "../errors.js";
+import { territorialLevelHint, territorialLevelList } from "../config.js";
+
+// Census data is published by SIDRA down to the municipality level.
+const CENSO_NIVEIS = ["1", "2", "3", "6"];
 
 // Mapping of census data themes to SIDRA tables
 const CENSO_TABELAS: Record<string, Record<string, { tabela: string; descricao: string }>> = {
@@ -189,7 +193,7 @@ export const censoSchema = z.object({
     .string()
     .optional()
     .default("1")
-    .describe("Nível territorial: 1=Brasil, 2=Região, 3=UF, 6=Município"),
+    .describe(territorialLevelHint(CENSO_NIVEIS)),
   localidades: z.string().optional().default("all").describe("Códigos das localidades ou 'all'"),
   formato: z.enum(["tabela", "json"]).optional().default("tabela").describe("Formato de saída"),
 });
@@ -248,14 +252,14 @@ export async function ibgeCenso(input: CensoInput): Promise<string> {
       );
     }
 
+    const nivel = input.nivel_territorial ?? "1";
+    if (!CENSO_NIVEIS.includes(nivel)) {
+      return ValidationErrors.invalidTerritory(nivel, "ibge_censo", territorialLevelList(CENSO_NIVEIS));
+    }
+
     // Build SIDRA query
     try {
-      const url = buildSidraUrl(
-        tabelaInfo.tabela,
-        input.nivel_territorial ?? "1",
-        input.localidades ?? "all",
-        periodos
-      );
+      const url = buildSidraUrl(tabelaInfo.tabela, nivel, input.localidades ?? "all", periodos);
 
       // Use cache for census data (1 hour TTL - data doesn't change often but queries vary)
       const key = cacheKey(url);

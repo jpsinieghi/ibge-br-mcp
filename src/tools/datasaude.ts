@@ -5,6 +5,10 @@ import { withMetrics } from "../metrics.js";
 import { createMarkdownTable, formatNumber } from "../utils/index.js";
 import { parseHttpError, ValidationErrors } from "../errors.js";
 import { fetchWithRetry } from "../retry.js";
+import { territorialLevelHint, territorialLevelList } from "../config.js";
+
+// Health data is published by SIDRA down to the municipality level.
+const DATASAUDE_NIVEIS = ["1", "2", "3", "6"];
 
 // Health indicators available via IBGE SIDRA
 const INDICADORES_SAUDE: Record<
@@ -96,7 +100,7 @@ export const datasaudeSchema = z.object({
     .string()
     .optional()
     .default("1")
-    .describe("1=Brasil, 2=Região, 3=UF, 6=Município"),
+    .describe(territorialLevelHint(DATASAUDE_NIVEIS)),
   localidade: z.string().optional().default("all").describe("Código da localidade ou 'all'"),
   periodo: z
     .string()
@@ -127,11 +131,20 @@ export async function ibgeDatasaude(input: DatasaudeInput): Promise<string> {
       );
     }
 
+    const nivel = input.nivel_territorial ?? "1";
+    if (!DATASAUDE_NIVEIS.includes(nivel)) {
+      return ValidationErrors.invalidTerritory(
+        nivel,
+        "ibge_datasaude",
+        territorialLevelList(DATASAUDE_NIVEIS)
+      );
+    }
+
     try {
       // Build SIDRA query
       const url = buildSidraUrl(
         indicadorInfo.tabela,
-        input.nivel_territorial ?? "1",
+        nivel,
         input.localidade ?? "all",
         input.periodo ?? "last"
       );

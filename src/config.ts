@@ -200,6 +200,54 @@ export const TERRITORIAL_LEVEL_NAMES: Record<string, string> = {
   "128": "Semiárido",
 };
 
+/**
+ * Short, agent-facing label for each territorial level code. Used to build the
+ * standardized `nivel_territorial` descriptions and error suggestions so the
+ * naming stays consistent across every tool (Brasil/Região/UF/Município ...).
+ */
+export const TERRITORIAL_LEVEL_LABELS: Record<string, string> = {
+  "1": "Brasil",
+  "2": "Região",
+  "3": "UF",
+  "6": "Município",
+  "7": "Região Metropolitana",
+  "8": "Mesorregião",
+  "9": "Microrregião",
+  "10": "Distrito",
+  "11": "Subdistrito",
+  "13": "RM/RIDE",
+  "14": "RIDE",
+  "15": "Aglomeração Urbana",
+  "17": "Região Geográfica Imediata",
+  "18": "Região Geográfica Intermediária",
+  "105": "Macrorregião de Saúde",
+  "106": "Região de Saúde",
+  "114": "Aglomerado Subnormal",
+  "127": "Amazônia Legal",
+  "128": "Semiárido",
+};
+
+/** All SIDRA territorial level codes, in canonical order. */
+export const ALL_TERRITORIAL_LEVELS: string[] = Object.keys(TERRITORIAL_LEVEL_LABELS);
+
+/**
+ * Builds the standardized `nivel_territorial` field description from the level
+ * codes a tool supports, e.g. ["1","2","3","6"] ->
+ * "Nível territorial (código N): 1=Brasil, 2=Região, 3=UF, 6=Município".
+ */
+export function territorialLevelHint(codes: string[]): string {
+  const list = codes.map((c) => `${c}=${TERRITORIAL_LEVEL_LABELS[c] ?? c}`).join(", ");
+  return `Nível territorial (código N): ${list}`;
+}
+
+/**
+ * Builds a "código (Label)" list for error suggestions, e.g.
+ * "1 (Brasil), 2 (Região), 3 (UF), 6 (Município)".
+ */
+export function territorialLevelList(codes: string[]): string {
+  return codes.map((c) => `${c} (${TERRITORIAL_LEVEL_LABELS[c] ?? c})`).join(", ");
+}
+
 // ============================================================================
 // Biome Codes
 // ============================================================================

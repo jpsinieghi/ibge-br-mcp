@@ -5,6 +5,7 @@ import { withMetrics } from "../metrics.js";
 import { createMarkdownTable, formatNumber } from "../utils/index.js";
 import { parseHttpError, ValidationErrors } from "../errors.js";
 import { isValidPeriod, isValidTerritorialLevel, formatValidationError } from "../validation.js";
+import { territorialLevelHint, territorialLevelList, ALL_TERRITORIAL_LEVELS } from "../config.js";
 
 // Schema for the tool input
 export const sidraSchema = z.object({
@@ -18,14 +19,11 @@ export const sidraSchema = z.object({
     .optional()
     .default("allxp")
     .describe("IDs das variáveis separados por vírgula, ou 'allxp' para todas"),
-  nivel_territorial: z.string().optional().default("1")
-    .describe(`Nível territorial (código N sem o prefixo):
-1=Brasil, 2=Grande Região, 3=UF, 6=Município, 7=Região Metropolitana,
-8=Mesorregião, 9=Microrregião, 10=Distrito, 11=Subdistrito,
-13=RM e RIDE, 14=Região Integrada de Desenvolvimento, 15=Aglomeração Urbana,
-17=Região Geográfica Imediata, 18=Região Geográfica Intermediária,
-105=Macrorregião de Saúde, 106=Região de Saúde,
-114=Aglomerado Subnormal, 127=Amazônia Legal, 128=Semiárido`),
+  nivel_territorial: z
+    .string()
+    .optional()
+    .default("1")
+    .describe(territorialLevelHint(ALL_TERRITORIAL_LEVELS)),
   localidades: z
     .string()
     .optional()
@@ -72,10 +70,10 @@ export async function ibgeSidra(input: SidraInput): Promise<string> {
     try {
       // Validate territorial level
       if (input.nivel_territorial && !isValidTerritorialLevel(input.nivel_territorial)) {
-        return formatValidationError(
-          "nivel_territorial",
+        return ValidationErrors.invalidTerritory(
           input.nivel_territorial,
-          "1 (Brasil), 2 (Região), 3 (UF), 6 (Município), etc. Use ibge_sidra_metadados para ver níveis disponíveis."
+          "ibge_sidra",
+          territorialLevelList(ALL_TERRITORIAL_LEVELS)
         );
       }
 
