@@ -53,7 +53,7 @@
     "dados-abertos",
     "open-data"
   ],
-  "author": "Sidney Bissoli",
+  "author": "Sidney da Silva Pereira Bissoli",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
