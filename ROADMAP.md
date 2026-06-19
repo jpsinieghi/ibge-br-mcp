@@ -154,12 +154,32 @@ receba uma resposta que ele consiga usar sem desperdiçar contexto.
 >   `cidades`/`paises` tinham testes só de schema — adicionados testes de
 >   invocação de função.
 
-### 1.6 Capacidades do protocolo MCP (estado da arte)
-- [ ] **Resources**: expor catálogos de referência (tabelas SIDRA, níveis
+### 1.6 Capacidades do protocolo MCP (estado da arte) ✅
+- [x] **Resources**: expor catálogos de referência (tabelas SIDRA, níveis
       territoriais, códigos de UF/região) como recursos legíveis
-- [ ] **Prompts**: templates de análise prontos (comparar municípios, montar
+- [x] **Prompts**: templates de análise prontos (comparar municípios, montar
       perfil demográfico, cruzar IBGE + BCB)
-- [ ] **Annotations**: marcar todas as tools como read-only
+- [x] **Annotations**: marcar todas as tools como read-only
+
+> Resolução:
+> - **Refator base:** construção do servidor extraída de `index.ts` para
+>   `createServer()` em `src/server.ts` (sem efeitos colaterais → testável);
+>   `index.ts` virou um wrapper STDIO fino. Isso permite testar a superfície do
+>   protocolo de ponta a ponta com `InMemoryTransport` + `Client`.
+> - **Annotations:** const `READ_ONLY` (`readOnlyHint`/`idempotentHint`/
+>   `openWorldHint` true, `destructiveHint` false) aplicada às 23 tools — todas
+>   são GET puro contra APIs públicas. Clients podem auto-aprovar/sinalizar como
+>   seguras.
+> - **Resources** (`src/resources.ts`): 5 catálogos JSON em `ibge://catalogos/…`
+>   — `ufs`, `regioes`, `niveis-territoriais`, `tabelas-sidra`, `biomas` —
+>   derivados de `config.ts` (fonte única). Dão ao agente as tabelas de lookup
+>   sem gastar round-trip de tool nem chutar código.
+> - **Prompts** (`src/prompts.ts`): 3 templates — `comparar-municipios`,
+>   `perfil-demografico`, `cruzar-ibge-bcb` — que orientam o encadeamento das
+>   tools certas, com argumentos validados por zod.
+> - +7 testes (`tests/server.test.ts`) exercendo annotations, leitura de
+>   resources e expansão de prompts via client real. Suíte: 453→460. Confirmado
+>   que `node dist/index.js` ainda sobe normalmente.
 
 ## Fase 2 — Descobribilidade (depois da usabilidade)
 

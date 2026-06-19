@@ -32,7 +32,11 @@ Node >= 18 (uses the global `fetch`). Tests mock `global.fetch` — they never h
 
 ## Architecture
 
-**Request flow for every tool:** `index.ts` registers the tool → handler calls the tool's `ibgeXxx(args)` function → that function wraps its body in `withMetrics(...)` → calls `cachedFetch(url, key, ttl)` → `cachedFetch` checks the in-memory cache, and on a miss calls `fetchWithRetry` (exponential backoff on network errors + 429/5xx) → on error the tool catches and returns `parseHttpError(...)`.
+**Entry point split:** `index.ts` is a thin STDIO wrapper — it imports `createServer()` from `server.ts`, connects a `StdioServerTransport`, and logs to stderr. `server.ts` holds `createServer()`, which builds the `McpServer` and registers every tool, resource, and prompt; it is **side-effect-free and testable** (see `tests/server.test.ts`, which drives it over an in-memory transport). All tool registrations and their English descriptions live in `server.ts`.
+
+**Request flow for every tool:** `server.ts` registers the tool → handler calls the tool's `ibgeXxx(args)` function → that function wraps its body in `withMetrics(...)` → calls `cachedFetch(url, key, ttl)` → `cachedFetch` checks the in-memory cache, and on a miss calls `fetchWithRetry` (exponential backoff on network errors + 429/5xx) → on error the tool catches and returns `parseHttpError(...)`.
+
+**All 23 tools are annotated read-only** via a shared `READ_ONLY` `ToolAnnotations` const in `server.ts` (`readOnlyHint`/`idempotentHint`/`openWorldHint` true, `destructiveHint` false) — every tool is a pure GET against a public API. Reference catalogs (UF/region codes, SIDRA territorial levels & table codes, biomes) are exposed as `ibge://catalogos/...` **resources** (`resources.ts`), and analysis templates (compare municipalities, demographic profile, cross IBGE+BCB) as **prompts** (`prompts.ts`). See roadmap 1.6.
 
 **Two registration shapes — pick by whether the tool returns tabular data:**
 - **Markdown-only tools** (catalog / localidade / listing — the majority) register with `server.tool(name, description, schema.shape, handler)`; the handler returns `{ content: [{ type: "text", text: result }] }` and the tool's impl returns a **Markdown string**.
@@ -55,15 +59,15 @@ Node >= 18 (uses the global `fetch`). Tests mock `global.fetch` — they never h
 Three edits, but the tool's user-facing description lives in exactly ONE place:
 1. The tool file in `src/tools/` — the Zod schema (`xxxSchema`), the input type, and the async impl (`ibgeXxx`).
 2. `src/tools/index.ts` — re-export the schema and the function.
-3. `src/index.ts` — a registration block (`server.tool(...)` for Markdown-only tools, `server.registerTool(...)` with an `outputSchema` for tabular data tools — see the request flow above). This **English** description is the ONLY description the MCP client sees; put tool-selection / disambiguation guidance here.
+3. `src/server.ts` — a registration block inside `createServer()` (`server.tool(name, desc, schema.shape, READ_ONLY, handler)` for Markdown-only tools, `server.registerTool(name, { description, inputSchema, outputSchema, annotations: READ_ONLY }, handler)` for tabular data tools — see the request flow above). Pass `READ_ONLY` so the new tool is annotated like the rest. This **English** description is the ONLY description the MCP client sees; put tool-selection / disambiguation guidance here.
 
-Note `SERVER_VERSION` in `src/index.ts` is hardcoded and must be bumped to match `version` in `package.json` and `server.json` on release — all three drift easily. Add a `CHANGELOG.md` entry for the release too.
+Note `SERVER_VERSION` in `src/server.ts` is hardcoded and must be bumped to match `version` in `package.json` and `server.json` on release — all three drift easily. Add a `CHANGELOG.md` entry for the release too.
 
 ## Conventions
 
 - ESM with `NodeNext` resolution: **all relative imports must use the `.js` extension** (e.g. `import { cache } from "./cache.js"`) even though the source is `.ts`. TypeScript is in `strict` mode with `noUnusedLocals`/`noUnusedParameters`/`noImplicitReturns` on.
 - All input validation is zod schemas with `.describe(...)` on each field (descriptions are in Portuguese and surface to the MCP client). Reuse `validation.ts` helpers for cross-cutting checks.
-- Two-language split is intentional: tool descriptions and error messages shown to end users are Portuguese; code, comments, and the registrations in `index.ts` are English.
+- Two-language split is intentional: tool descriptions and error messages shown to end users are Portuguese; code, comments, and the tool registrations in `server.ts` are English. (Resource/prompt descriptions in `resources.ts`/`prompts.ts` are Portuguese — they surface to end users.)
 
 ## Planning
 
