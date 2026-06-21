@@ -1,12 +1,12 @@
 {
   "name": "ibge-br-mcp",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "mcpName": "io.github.SidneyBissoli/ibge-br-mcp",
   "description": "MCP server giving AI assistants live, sourced access to Brazilian public data — geography, census, economy and health — from the official IBGE APIs. Exact figures with provenance, not approximations.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ibge-br-mcp": "./dist/index.js"
+    "ibge-br-mcp": "dist/index.js"
   },
   "files": [
     "dist"
@@ -56,7 +56,7 @@
   "author": "Sidney da Silva Pereira Bissoli",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -76,7 +76,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SidneyBissoli/ibge-br-mcp"
+    "url": "git+https://github.com/SidneyBissoli/ibge-br-mcp.git"
   },
   "homepage": "https://github.com/SidneyBissoli/ibge-br-mcp#readme",
   "bugs": {

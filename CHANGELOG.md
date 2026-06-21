@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2] - 2026-06-21
+
+Supply-chain hardening release (no functional changes).
+
+### Changed
+- **Pinned `@modelcontextprotocol/sdk` to `^1.29.0`** (was `^1.0.0`). The
+  previous wildcard range let any 1.x resolve into the tree; narrowing it gives
+  reproducible installs and a tighter supply-chain surface.
+
+### Security
+- **Published with npm provenance attestation** via the GitHub Actions release
+  workflow (OIDC / SLSA). Earlier 3.0.x releases were published manually and
+  carried no attestation; cutting this release through CI restores provenance,
+  which Socket.dev and npm surface as a supply-chain trust signal.
+
 ## [3.0.0] - 2026-06-20
 
 Naming consistency, structured output everywhere, and a hosted HTTP transport
