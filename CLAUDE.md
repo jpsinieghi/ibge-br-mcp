@@ -71,7 +71,7 @@ Three edits, but the tool's user-facing description lives in exactly ONE place:
 2. `src/tools/index.ts` — re-export the schema and the function.
 3. `src/server.ts` — a registration block inside `createServer()` (`server.tool(name, desc, schema.shape, READ_ONLY, handler)` for Markdown-only tools, `server.registerTool(name, { description, inputSchema, outputSchema, annotations: READ_ONLY }, handler)` for tabular data tools — see the request flow above). Pass `READ_ONLY` so the new tool is annotated like the rest. This **English** description is the ONLY description the MCP client sees; put tool-selection / disambiguation guidance here.
 
-Note `SERVER_VERSION` in `src/server.ts` is hardcoded and must be bumped to match `version` in `package.json` and `server.json` on release — all three drift easily. Add a `CHANGELOG.md` entry for the release too.
+Note `SERVER_VERSION` in `src/server.ts` is sourced from `package.json` (`import pkg from "../package.json" with { type: "json" }`; esbuild inlines it for the Worker build), so on release bump the version in **`package.json` only** — `src` no longer drifts. `server.json` is re-synced from `package.json` by the `publish-registry` CI job; the LobeHub `lhm.plugin.json` version is still bumped by hand. Add a `CHANGELOG.md` entry for the release too. (The JSON import attribute needs Node >=18.20, hence `engines`.)
 
 ## Conventions
 
