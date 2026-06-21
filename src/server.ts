@@ -1,5 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+// Version sourced from package.json (single source of truth — avoids drift).
+// Node ESM reads it via the import attribute; esbuild inlines it for the Worker build.
+import pkg from "../package.json" with { type: "json" };
 
 import { toMcpResult } from "./structured.js";
 
@@ -81,7 +84,7 @@ import { registerPrompts } from "./prompts.js";
 
 // Server metadata
 export const SERVER_NAME = "ibge-br-mcp";
-export const SERVER_VERSION = "3.0.2";
+export const SERVER_VERSION = pkg.version;
 
 /**
  * Every tool here is a read-only query against a public REST API: it never
