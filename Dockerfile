@@ -18,5 +18,5 @@ RUN npm run build
 # Remover dependências de desenvolvimento
 RUN npm prune --production
 
-# Comando para iniciar o servidor
-CMD ["node", "dist/index.js"]
+# Comando para iniciar o servidor HTTP para Cloud Run
+CMD ["node", "dist/cloud-run.js"]
