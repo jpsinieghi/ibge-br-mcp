@@ -32,12 +32,22 @@ export const cidadesOutputSchema = z.object({
   indicadores: z
     .array(
       z.object({
+        alias: z.string().optional(),
+        indicador_id: z.number().optional(),
         nome: z.string(),
         valor: z.string(),
+        valor_numerico: z.number().nullable().optional(),
+        unidade: z.string().optional(),
+        pesquisa: z.string().optional(),
+        fonte: z.string().optional(),
         ano: z.string().optional(),
       })
     )
     .describe("Indicadores retornados (vazio para respostas de catálogo)"),
+  parcial: z.boolean().optional(),
+  indicadores_indisponiveis: z
+    .array(z.object({ alias: z.string(), motivo: z.string() }))
+    .optional(),
 });
 
 /** Minimal valid payload for catalog/listing responses. */
@@ -46,22 +56,66 @@ function listingPayload(tipo: string): Record<string, unknown> {
 }
 
 // Indicadores principais do panorama (usados em cidades.ibge.gov.br)
-const INDICADORES_PANORAMA: Record<string, { id: number; pesquisa: string; nome: string }> = {
-  populacao: { id: 29171, pesquisa: "33", nome: "População estimada" },
-  densidade: { id: 29168, pesquisa: "33", nome: "Densidade demográfica" },
-  escolarizacao: { id: 60045, pesquisa: "40", nome: "Taxa de escolarização 6-14 anos" },
-  idh: { id: 30255, pesquisa: "37", nome: "IDH Municipal" },
-  mortalidade: { id: 30279, pesquisa: "39", nome: "Mortalidade infantil" },
-  pib_per_capita: { id: 47001, pesquisa: "38", nome: "PIB per capita" },
-  salario_medio: { id: 29765, pesquisa: "33", nome: "Salário médio mensal" },
-  populacao_ocupada: { id: 29763, pesquisa: "33", nome: "Pessoal ocupado" },
-  receitas: { id: 28141, pesquisa: "33", nome: "Receitas realizadas" },
-  despesas: { id: 28142, pesquisa: "33", nome: "Despesas empenhadas" },
-  idhm_renda: { id: 30257, pesquisa: "37", nome: "IDHM Renda" },
-  idhm_longevidade: { id: 30259, pesquisa: "37", nome: "IDHM Longevidade" },
-  idhm_educacao: { id: 30261, pesquisa: "37", nome: "IDHM Educação" },
-  area: { id: 29167, pesquisa: "33", nome: "Área territorial" },
+export const INDICADORES_CIDADES: Record<
+  string,
+  { id: number; pesquisa: string; nome: string; unidade: string; nivel?: "brasil" }
+> = {
+  populacao: { id: 29171, pesquisa: "33", nome: "População estimada", unidade: "pessoas" },
+  densidade: { id: 29168, pesquisa: "33", nome: "Densidade demográfica", unidade: "hab/km²" },
+  escolarizacao: {
+    id: 60045,
+    pesquisa: "40",
+    nome: "Taxa de escolarização 6-14 anos",
+    unidade: "%",
+  },
+  idh: {
+    id: 30255,
+    pesquisa: "37",
+    nome: "IDH (série nacional; não disponível por município neste endpoint)",
+    unidade: "índice",
+    nivel: "brasil",
+  },
+  mortalidade: {
+    id: 30279,
+    pesquisa: "39",
+    nome: "Mortalidade infantil",
+    unidade: "por mil nascidos vivos",
+  },
+  pib_per_capita: { id: 47001, pesquisa: "38", nome: "PIB per capita", unidade: "R$" },
+  salario_medio: {
+    id: 29765,
+    pesquisa: "33",
+    nome: "Salário médio mensal dos trabalhadores formais",
+    unidade: "salários mínimos",
+  },
+  populacao_ocupada: { id: 29763, pesquisa: "33", nome: "Pessoal ocupado", unidade: "pessoas" },
+  receitas: { id: 28141, pesquisa: "33", nome: "Receitas realizadas", unidade: "R$" },
+  despesas: { id: 28142, pesquisa: "33", nome: "Despesas empenhadas", unidade: "R$" },
+  idhm_renda: {
+    id: 30257,
+    pesquisa: "37",
+    nome: "IDH Renda (série nacional)",
+    unidade: "índice",
+    nivel: "brasil",
+  },
+  idhm_longevidade: {
+    id: 30259,
+    pesquisa: "37",
+    nome: "IDH Longevidade (série nacional)",
+    unidade: "índice",
+    nivel: "brasil",
+  },
+  idhm_educacao: {
+    id: 30261,
+    pesquisa: "37",
+    nome: "IDH Educação (série nacional)",
+    unidade: "índice",
+    nivel: "brasil",
+  },
+  area: { id: 29167, pesquisa: "33", nome: "Área territorial", unidade: "km²" },
 };
+
+const INDICADORES_PANORAMA = INDICADORES_CIDADES;
 
 // Pesquisas principais disponíveis
 const PESQUISAS_PRINCIPAIS = [
@@ -175,65 +229,30 @@ async function panoramaMunicipio(codigoMunicipio: string): Promise<StructuredToo
     "area",
     "densidade",
     "pib_per_capita",
-    "idh",
     "escolarizacao",
     "mortalidade",
     "salario_medio",
   ];
 
-  const resultados: Array<{ nome: string; valor: string; ano: string }> = [];
-
-  for (const indKey of indicadoresParaBuscar) {
-    const indInfo = INDICADORES_PANORAMA[indKey];
-    if (!indInfo) continue;
-
-    try {
-      const url = `${IBGE_API.PESQUISAS}/${indInfo.pesquisa}/indicadores/${indInfo.id}/resultados/${codigoMunicipio}`;
-      const key = cacheKey(url);
-      const data = await cachedFetch<PesquisaResultado[]>(url, key, CACHE_TTL.MEDIUM);
-
-      if (data && data.length > 0 && data[0].res && data[0].res.length > 0) {
-        const resultado = data[0].res[0].res;
-        const anos = Object.keys(resultado).sort().reverse();
-
-        for (const ano of anos) {
-          const valor = resultado[ano];
-          if (valor !== null && valor !== "-" && valor !== "...") {
-            let valorFormatado = String(valor);
-
-            // Formatar números
-            if (!isNaN(Number(valor))) {
-              const num = Number(valor);
-              if (indKey === "populacao" || indKey === "populacao_ocupada") {
-                valorFormatado = formatNumber(num) + " pessoas";
-              } else if (indKey === "area") {
-                valorFormatado = formatNumber(num, { maximumFractionDigits: 2 }) + " km²";
-              } else if (indKey === "densidade") {
-                valorFormatado = formatNumber(num, { maximumFractionDigits: 2 }) + " hab/km²";
-              } else if (indKey === "pib_per_capita" || indKey === "salario_medio") {
-                valorFormatado = "R$ " + formatNumber(num, { maximumFractionDigits: 2 });
-              } else if (indKey === "idh" || indKey.startsWith("idhm")) {
-                valorFormatado = formatNumber(num, { maximumFractionDigits: 3 });
-              } else if (indKey === "escolarizacao" || indKey === "mortalidade") {
-                valorFormatado = formatNumber(num, { maximumFractionDigits: 1 }) + "%";
-              } else {
-                valorFormatado = formatNumber(num);
-              }
-            }
-
-            resultados.push({
-              nome: indInfo.nome,
-              valor: valorFormatado,
-              ano,
-            });
-            break;
-          }
-        }
-      }
-    } catch {
-      // Ignorar erros individuais
-    }
-  }
+  const consultas = await Promise.allSettled(
+    indicadoresParaBuscar.map((alias) => consultarUltimoValor(alias, codigoMunicipio))
+  );
+  const resultados = consultas
+    .filter(
+      (item): item is PromiseFulfilledResult<IndicadorCidadeResultado> =>
+        item.status === "fulfilled"
+    )
+    .map((item) => item.value);
+  const indicadoresIndisponiveis = consultas
+    .map((item, index) => ({ item, alias: indicadoresParaBuscar[index] }))
+    .filter(({ item }) => item.status === "rejected")
+    .map(({ item, alias }) => ({
+      alias,
+      motivo:
+        item.status === "rejected" && item.reason instanceof Error
+          ? item.reason.message
+          : "Indicador sem valor utilizável",
+    }));
 
   if (resultados.length === 0) {
     return {
@@ -257,6 +276,10 @@ async function panoramaMunicipio(codigoMunicipio: string): Promise<StructuredToo
     { alignment: ["left", "right", "center"] }
   );
 
+  if (indicadoresIndisponiveis.length > 0) {
+    output += `\n_Resultado parcial: ${indicadoresIndisponiveis.length} indicador(es) indisponível(is): ${indicadoresIndisponiveis.map((item) => item.alias).join(", ")}._\n`;
+  }
+
   output += "\n### Ferramentas Relacionadas\n\n";
   output += `- \`ibge_cidades tipo="historico" municipio="${codigoMunicipio}" indicador="29171"\` - Histórico de população\n`;
   output += `- \`ibge_cidades tipo="pesquisas"\` - Ver pesquisas disponíveis\n`;
@@ -269,7 +292,70 @@ async function panoramaMunicipio(codigoMunicipio: string): Promise<StructuredToo
       municipio: codigoMunicipio,
       nome: nomeMunicipio,
       indicadores: resultados,
+      parcial: indicadoresIndisponiveis.length > 0,
+      indicadores_indisponiveis: indicadoresIndisponiveis,
     },
+  };
+}
+
+export interface IndicadorCidadeResultado {
+  alias: string;
+  indicador_id: number;
+  nome: string;
+  valor: string;
+  valor_numerico: number | null;
+  unidade: string;
+  pesquisa: string;
+  fonte: string;
+  ano: string;
+}
+
+export async function consultarUltimoValor(
+  alias: string,
+  municipio: string
+): Promise<IndicadorCidadeResultado> {
+  const info = INDICADORES_CIDADES[alias.toLowerCase()];
+  if (!info) throw new Error(`Indicador desconhecido: ${alias}`);
+  if (info.nivel === "brasil") {
+    throw new Error(
+      `O indicador ${info.id} é uma série nacional e não retorna valores municipais na API de Pesquisas do IBGE`
+    );
+  }
+  if (!isValidIbgeCode(municipio) || municipio.length !== 7) {
+    throw new Error(`Código IBGE municipal inválido: ${municipio}`);
+  }
+
+  const url = `${IBGE_API.PESQUISAS}/${info.pesquisa}/indicadores/${info.id}/resultados/${municipio}`;
+  const data = await cachedFetch<PesquisaResultado[]>(url, cacheKey(url), CACHE_TTL.MEDIUM);
+  const serie = data?.[0]?.res?.[0]?.res;
+  if (!serie) throw new Error("Fonte pública não retornou série");
+  const entry = Object.entries(serie)
+    .filter(([, value]) => value !== null && value !== "-" && value !== "...")
+    .sort(([a], [b]) => b.localeCompare(a))[0];
+  if (!entry) throw new Error("Fonte pública não retornou valor utilizável");
+
+  const [ano, raw] = entry;
+  const valorNumerico = Number(raw);
+  const numero = Number.isFinite(valorNumerico) ? valorNumerico : null;
+  let valor = String(raw);
+  if (numero !== null) {
+    if (info.unidade === "R$") valor = `R$ ${formatNumber(numero, { maximumFractionDigits: 2 })}`;
+    else if (info.unidade === "índice") valor = formatNumber(numero, { maximumFractionDigits: 3 });
+    else valor = `${formatNumber(numero, { maximumFractionDigits: 2 })} ${info.unidade}`;
+  }
+
+  return {
+    alias,
+    indicador_id: info.id,
+    nome: info.nome,
+    valor,
+    valor_numerico: numero,
+    unidade: info.unidade,
+    pesquisa: info.pesquisa,
+    fonte: alias.toLowerCase().startsWith("idh")
+      ? "Atlas do Desenvolvimento Humano no Brasil (PNUD Brasil, Ipea e FJP), disponibilizado no ecossistema IBGE"
+      : "IBGE",
+    ano,
   };
 }
 
@@ -293,43 +379,35 @@ async function consultarIndicador(
       };
     }
 
-    const url = `${IBGE_API.PESQUISAS}/${indicadorInfo.pesquisa}/indicadores/${indicadorInfo.id}/resultados/${municipio}`;
-    const key = cacheKey(url);
-    const data = await cachedFetch<PesquisaResultado[]>(url, key, CACHE_TTL.MEDIUM);
-
-    if (!data || data.length === 0) {
+    let latest: IndicadorCidadeResultado;
+    try {
+      latest = await consultarUltimoValor(indicador.toLowerCase(), municipio);
+    } catch (error) {
       return {
-        markdown: ValidationErrors.emptyResult("ibge_cidades"),
+        markdown: ValidationErrors.emptyResult(
+          "ibge_cidades",
+          error instanceof Error ? error.message : "Indicador indisponível"
+        ),
         structured: { tipo: "indicador", municipio, nome: indicadorInfo.nome, indicadores: [] },
       };
     }
 
     let output = `## ${indicadorInfo.nome}\n\n`;
     output += `**Município:** ${municipio}\n\n`;
-
-    const indicadores: Array<{ nome: string; valor: string; ano?: string }> = [];
-
-    if (data[0].res && data[0].res.length > 0) {
-      const resultado = data[0].res[0].res;
-      const entries = Object.entries(resultado)
-        .filter(([, v]) => v !== null && v !== "-" && v !== "...")
-        .sort(([a], [b]) => b.localeCompare(a))
-        .slice(0, 20);
-
-      output += createMarkdownTable(
-        ["Ano", "Valor"],
-        entries.map(([ano, valor]) => [ano, String(valor)]),
-        { alignment: ["center", "right"] }
-      );
-
-      for (const [ano, valor] of entries) {
-        indicadores.push({ nome: indicadorInfo.nome, valor: String(valor), ano });
-      }
-    }
+    output += createMarkdownTable(
+      ["Ano", "Valor", "Unidade"],
+      [[latest.ano, latest.valor, latest.unidade]],
+      { alignment: ["center", "right", "left"] }
+    );
 
     return {
       markdown: output,
-      structured: { tipo: "indicador", municipio, nome: indicadorInfo.nome, indicadores },
+      structured: {
+        tipo: "indicador",
+        municipio,
+        nome: indicadorInfo.nome,
+        indicadores: [latest],
+      },
     };
   }
 

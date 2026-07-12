@@ -22,7 +22,7 @@ const municipioLocalidade = {
 
 describe("ibge_cidades", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockFetch.mockReset();
     cache.clear();
   });
 
@@ -115,7 +115,10 @@ describe("ibge_cidades", () => {
       expect(lastUrl()).toContain("/33/indicadores/29171/resultados/3550308");
       expect(result.markdown).toContain("População estimada");
       expect(result.markdown).toContain("2022");
-      expect(result.markdown).toContain("11451999");
+      expect(result.markdown).toContain("11.451.999 pessoas");
+      expect(
+        (result.structured?.indicadores as Array<{ valor_numerico?: number }>)[0].valor_numerico
+      ).toBe(11451999);
     });
 
     it("falls back to the indicator list for an unknown alias", async () => {

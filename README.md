@@ -27,9 +27,9 @@ This server implements the [Model Context Protocol (MCP)](https://modelcontextpr
 
 Ask your assistant, in plain Portuguese:
 
-- *"Qual era a população de Belo Horizonte no Censo 2022?"* → `ibge_cidades` / `ibge_censo`
-- *"Liste os municípios do Espírito Santo."* → `ibge_municipios`
-- *"Compare o PIB per capita das capitais do Sudeste."* → `ibge_comparar`
+- _"Qual era a população de Belo Horizonte no Censo 2022?"_ → `ibge_cidades` / `ibge_censo`
+- _"Liste os municípios do Espírito Santo."_ → `ibge_municipios`
+- _"Compare o PIB per capita das capitais do Sudeste."_ → `ibge_comparar`
 
 The answers come live from the official IBGE APIs — exact figures with the table and period they came from, not numbers guessed from training data.
 
@@ -47,65 +47,76 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 ## Available Tools
 
 ### Localities & Geography
-| Tool | Description |
-|:-----|:------------|
-| `ibge_estados` | List Brazilian states with region filtering |
+
+| Tool              | Description                                    |
+| :---------------- | :--------------------------------------------- |
+| `ibge_estados`    | List Brazilian states with region filtering    |
 | `ibge_municipios` | List municipalities by state or search by name |
-| `ibge_localidade` | Get details of a locality by IBGE code |
-| `ibge_geocodigo` | Decode IBGE codes or search codes by name |
-| `ibge_vizinhos` | Find neighboring municipalities |
+| `ibge_localidade` | Get details of a locality by IBGE code         |
+| `ibge_geocodigo`  | Decode IBGE codes or search codes by name      |
+| `ibge_vizinhos`   | Find neighboring municipalities                |
 
 ### Statistical Data (SIDRA)
-| Tool | Description |
-|:-----|:------------|
-| `ibge_sidra` | Query SIDRA tables (Census, PNAD, GDP, etc.) |
-| `ibge_sidra_tabelas` | List and search available SIDRA tables |
+
+| Tool                   | Description                                     |
+| :--------------------- | :---------------------------------------------- |
+| `ibge_sidra`           | Query SIDRA tables (Census, PNAD, GDP, etc.)    |
+| `ibge_sidra_tabelas`   | List and search available SIDRA tables          |
 | `ibge_sidra_metadados` | Get table metadata (variables, periods, levels) |
-| `ibge_pesquisas` | List IBGE research surveys and their tables |
+| `ibge_pesquisas`       | List IBGE research surveys and their tables     |
 
 ### Economic & Social Indicators
-| Tool | Description |
-|:-----|:------------|
+
+| Tool               | Description                                              |
+| :----------------- | :------------------------------------------------------- |
 | `ibge_indicadores` | Economic and social indicators (GDP, IPCA, unemployment) |
-| `ibge_censo` | Census data (1970-2022) with 16 themes |
-| `ibge_comparar` | Compare indicators across localities with rankings |
+| `ibge_censo`       | Census data (1970-2022) with 16 themes                   |
+| `ibge_comparar`    | Compare indicators across localities with rankings       |
 
 ### Municipal Data (Cidades@)
-| Tool | Description |
-|:-----|:------------|
-| `ibge_cidades` | Municipal indicators (population, HDI, GDP per capita, etc.) |
+
+| Tool                | Description                                                             |
+| :------------------ | :---------------------------------------------------------------------- |
+| `ibge_cidades`      | Municipal indicators; HDI code 30255 is national, not municipal         |
+| `ibge_cidades_lote` | Up to 5 public indicators for up to 50 IBGE municipality codes per call |
 
 ### International Data
-| Tool | Description |
-|:-----|:------------|
+
+| Tool          | Description                               |
+| :------------ | :---------------------------------------- |
 | `ibge_paises` | Country data following UN M49 methodology |
 
 ### Demographics
-| Tool | Description |
-|:-----|:------------|
+
+| Tool             | Description                               |
+| :--------------- | :---------------------------------------- |
 | `ibge_populacao` | Real-time Brazilian population projection |
-| `ibge_nomes` | Name frequency and rankings in Brazil |
+| `ibge_nomes`     | Name frequency and rankings in Brazil     |
 
 ### Classifications
-| Tool | Description |
-|:-----|:------------|
+
+| Tool        | Description                                           |
+| :---------- | :---------------------------------------------------- |
 | `ibge_cnae` | CNAE (National Classification of Economic Activities) |
 
 ### Maps & Geographic Meshes
-| Tool | Description |
-|:-----|:------------|
-| `ibge_malhas` | Geographic meshes (GeoJSON, TopoJSON, SVG) |
+
+| Tool               | Description                                       |
+| :----------------- | :------------------------------------------------ |
+| `ibge_malhas`      | Geographic meshes (GeoJSON, TopoJSON, SVG)        |
 | `ibge_malhas_tema` | Thematic meshes (biomes, Legal Amazon, semi-arid) |
 
 ### Health
-| Tool | Description |
-|:-----|:------------|
+
+| Tool             | Description                        |
+| :--------------- | :--------------------------------- |
 | `ibge_datasaude` | Health indicators via IBGE's SIDRA |
 
 ### News & Calendar
-| Tool | Description |
-|:-----|:------------|
-| `ibge_noticias` | IBGE news and press releases |
+
+| Tool              | Description                          |
+| :---------------- | :----------------------------------- |
+| `ibge_noticias`   | IBGE news and press releases         |
 | `ibge_calendario` | IBGE release and collection calendar |
 
 ## Which tool should I use?
@@ -114,30 +125,30 @@ With 22 tools, several can touch the same topic. Quick guide for the common over
 
 ### Population & demographics
 
-| You want… | Use |
-|:----------|:----|
-| Brazil's population right now (real-time) | `ibge_populacao` |
-| A single municipality/state panel (population, HDI, GDP…) | `ibge_cidades` |
-| Census data or historical series (1970–2022) | `ibge_censo` |
-| Rank/compare 2–10 localities on one indicator | `ibge_comparar` |
-| A macro indicator time series (GDP, IPCA, unemployment…) | `ibge_indicadores` |
-| A specific SIDRA table / fine control | `ibge_sidra` |
+| You want…                                                 | Use                |
+| :-------------------------------------------------------- | :----------------- |
+| Brazil's population right now (real-time)                 | `ibge_populacao`   |
+| A single municipality/state panel (population, GDP, etc.) | `ibge_cidades`     |
+| Census data or historical series (1970–2022)              | `ibge_censo`       |
+| Rank/compare 2–10 localities on one indicator             | `ibge_comparar`    |
+| A macro indicator time series (GDP, IPCA, unemployment…)  | `ibge_indicadores` |
+| A specific SIDRA table / fine control                     | `ibge_sidra`       |
 
 ### Economic indicators
 
-| You want… | Use |
-|:----------|:----|
+| You want…                                            | Use                |
+| :--------------------------------------------------- | :----------------- |
 | IPCA, INPC, GDP, unemployment (IBGE, primary source) | `ibge_indicadores` |
 
 ### Localities & codes
 
-| You want… | Use |
-|:----------|:----|
-| List/search municipalities | `ibge_municipios` |
-| List states | `ibge_estados` |
-| Resolve a name→code at any level, or decode a code's structure | `ibge_geocodigo` |
-| Full record of one locality you already have the code for | `ibge_localidade` |
-| Neighboring municipalities | `ibge_vizinhos` |
+| You want…                                                      | Use               |
+| :------------------------------------------------------------- | :---------------- |
+| List/search municipalities                                     | `ibge_municipios` |
+| List states                                                    | `ibge_estados`    |
+| Resolve a name→code at any level, or decode a code's structure | `ibge_geocodigo`  |
+| Full record of one locality you already have the code for      | `ibge_localidade` |
+| Neighboring municipalities                                     | `ibge_vizinhos`   |
 
 ### SIDRA workflow
 
@@ -145,9 +156,9 @@ Discover → inspect → query: `ibge_pesquisas` / `ibge_sidra_tabelas` (find a 
 
 ### Maps (meshes)
 
-| You want… | Use |
-|:----------|:----|
-| Administrative outlines (Brazil/region/state/municipality) | `ibge_malhas` |
+| You want…                                                       | Use                |
+| :-------------------------------------------------------------- | :----------------- |
+| Administrative outlines (Brazil/region/state/municipality)      | `ibge_malhas`      |
 | Thematic areas (biomes, Legal Amazon, semi-arid, metro regions) | `ibge_malhas_tema` |
 
 ## Installation
@@ -456,6 +467,9 @@ npm run watch
 # Run tests
 npm test
 
+# live smoke test against public APIs (no mocks)
+npm run test:live
+
 # Run tests in watch mode
 npm run test:watch
 
@@ -543,6 +557,7 @@ This project maintains high code quality standards:
 - **Automated CI/CD** via GitHub Actions
 
 Run tests locally:
+
 ```bash
 # Run all tests
 npm test

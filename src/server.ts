@@ -77,6 +77,9 @@ import {
   cidadesSchema,
   cidadesOutputSchema,
   ibgeCidades,
+  cidadesLoteSchema,
+  cidadesLoteOutputSchema,
+  ibgeCidadesLote,
 } from "./tools/index.js";
 
 import { registerResources } from "./resources.js";
@@ -950,6 +953,25 @@ Behavior: read-only and idempotent — a live GET against the public IBGE APIs (
     async (args) => {
       return toMcpResult(await ibgeCidades(args));
     }
+  );
+
+  server.registerTool(
+    "ibge_cidades_lote",
+    {
+      description: `Queries public municipal indicators for 1–50 IBGE municipality codes in one call.
+
+Use this tool for cross-municipality analytical preparation. It retrieves public data only; it does not calculate donation metrics, correlations, potential scores, or causal conclusions.
+
+Available municipal aliases include populacao, area, densidade, pib_per_capita, escolarizacao, mortalidade and salario_medio. Up to 5 indicators can be requested per call. The response preserves numeric values, units, reference years, partial-result status and per-item failures. IDH code 30255 is national and is deliberately rejected for municipality codes.
+
+Important: salario_medio means average monthly salary of formal workers and is expressed in minimum wages; it is a proxy, not household income.
+
+Behavior: read-only and idempotent — live GET requests against public IBGE APIs.`,
+      inputSchema: cidadesLoteSchema.shape,
+      outputSchema: cidadesLoteOutputSchema.shape,
+      annotations: READ_ONLY,
+    },
+    async (args) => toMcpResult(await ibgeCidadesLote(args))
   );
 
   // Reference catalogs (roadmap 1.6) and analysis templates

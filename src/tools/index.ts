@@ -9,7 +9,11 @@ export { ibgeNoticias, noticiasSchema, noticiasOutputSchema } from "./noticias.j
 
 // SIDRA tools
 export { ibgeSidraTabelas, sidraTabelasSchema, sidraTabelasOutputSchema } from "./sidra-tabelas.js";
-export { ibgeSidraMetadados, sidraMetadadosSchema, sidraMetadadosOutputSchema } from "./sidra-metadados.js";
+export {
+  ibgeSidraMetadados,
+  sidraMetadadosSchema,
+  sidraMetadadosOutputSchema,
+} from "./sidra-metadados.js";
 export { ibgeMalhas, malhasSchema, malhasOutputSchema } from "./malhas.js";
 export { ibgePesquisas, pesquisasSchema, pesquisasOutputSchema } from "./pesquisas.js";
 export { ibgeCenso, censoSchema, censoOutputSchema } from "./censo.js";
@@ -31,3 +35,4 @@ export { ibgeDatasaude, datasaudeSchema, datasaudeOutputSchema } from "./datasau
 // Phase 4 tools (v1.9.0)
 export { ibgePaises, paisesSchema, paisesOutputSchema } from "./paises.js";
 export { ibgeCidades, cidadesSchema, cidadesOutputSchema } from "./cidades.js";
+export { ibgeCidadesLote, cidadesLoteSchema, cidadesLoteOutputSchema } from "./cidades-lote.js";

@@ -27,9 +27,9 @@ Este servidor implementa o [Model Context Protocol (MCP)](https://modelcontextpr
 
 Pergunte ao seu assistente, em português:
 
-- *"Qual era a população de Belo Horizonte no Censo 2022?"* → `ibge_cidades` / `ibge_censo`
-- *"Liste os municípios do Espírito Santo."* → `ibge_municipios`
-- *"Compare o PIB per capita das capitais do Sudeste."* → `ibge_comparar`
+- _"Qual era a população de Belo Horizonte no Censo 2022?"_ → `ibge_cidades` / `ibge_censo`
+- _"Liste os municípios do Espírito Santo."_ → `ibge_municipios`
+- _"Compare o PIB per capita das capitais do Sudeste."_ → `ibge_comparar`
 
 As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tabela e o período de onde vieram, não números chutados do treino.
 
@@ -47,65 +47,76 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 ## Ferramentas Disponíveis
 
 ### Localidades e Geografia
-| Ferramenta | Descrição |
-|:-----------|:----------|
-| `ibge_estados` | Lista estados brasileiros com filtro por região |
-| `ibge_municipios` | Lista municípios por estado ou busca por nome |
+
+| Ferramenta        | Descrição                                         |
+| :---------------- | :------------------------------------------------ |
+| `ibge_estados`    | Lista estados brasileiros com filtro por região   |
+| `ibge_municipios` | Lista municípios por estado ou busca por nome     |
 | `ibge_localidade` | Obtém detalhes de uma localidade pelo código IBGE |
-| `ibge_geocodigo` | Decodifica códigos IBGE ou busca códigos por nome |
-| `ibge_vizinhos` | Encontra municípios vizinhos |
+| `ibge_geocodigo`  | Decodifica códigos IBGE ou busca códigos por nome |
+| `ibge_vizinhos`   | Encontra municípios vizinhos                      |
 
 ### Dados Estatísticos (SIDRA)
-| Ferramenta | Descrição |
-|:-----------|:----------|
-| `ibge_sidra` | Consulta tabelas SIDRA (Censo, PNAD, PIB, etc.) |
-| `ibge_sidra_tabelas` | Lista e busca tabelas SIDRA disponíveis |
+
+| Ferramenta             | Descrição                                                |
+| :--------------------- | :------------------------------------------------------- |
+| `ibge_sidra`           | Consulta tabelas SIDRA (Censo, PNAD, PIB, etc.)          |
+| `ibge_sidra_tabelas`   | Lista e busca tabelas SIDRA disponíveis                  |
 | `ibge_sidra_metadados` | Obtém metadados de tabelas (variáveis, períodos, níveis) |
-| `ibge_pesquisas` | Lista pesquisas do IBGE e suas tabelas |
+| `ibge_pesquisas`       | Lista pesquisas do IBGE e suas tabelas                   |
 
 ### Indicadores Econômicos e Sociais
-| Ferramenta | Descrição |
-|:-----------|:----------|
+
+| Ferramenta         | Descrição                                                |
+| :----------------- | :------------------------------------------------------- |
 | `ibge_indicadores` | Indicadores econômicos e sociais (PIB, IPCA, desemprego) |
-| `ibge_censo` | Dados censitários (1970-2022) com 16 temas |
-| `ibge_comparar` | Compara indicadores entre localidades com rankings |
+| `ibge_censo`       | Dados censitários (1970-2022) com 16 temas               |
+| `ibge_comparar`    | Compara indicadores entre localidades com rankings       |
 
 ### Dados Municipais (Cidades@)
-| Ferramenta | Descrição |
-|:-----------|:----------|
-| `ibge_cidades` | Indicadores municipais (população, IDH, PIB per capita, etc.) |
+
+| Ferramenta          | Descrição                                                                    |
+| :------------------ | :--------------------------------------------------------------------------- |
+| `ibge_cidades`      | Indicadores de um município; o código 30255 de IDH é nacional, não municipal |
+| `ibge_cidades_lote` | Até 5 indicadores públicos para até 50 códigos IBGE municipais por chamada   |
 
 ### Dados Internacionais
-| Ferramenta | Descrição |
-|:-----------|:----------|
+
+| Ferramenta    | Descrição                                    |
+| :------------ | :------------------------------------------- |
 | `ibge_paises` | Dados de países seguindo metodologia ONU M49 |
 
 ### Demografia
-| Ferramenta | Descrição |
-|:-----------|:----------|
+
+| Ferramenta       | Descrição                                      |
+| :--------------- | :--------------------------------------------- |
 | `ibge_populacao` | Projeção populacional brasileira em tempo real |
-| `ibge_nomes` | Frequência e rankings de nomes no Brasil |
+| `ibge_nomes`     | Frequência e rankings de nomes no Brasil       |
 
 ### Classificações
-| Ferramenta | Descrição |
-|:-----------|:----------|
+
+| Ferramenta  | Descrição                                              |
+| :---------- | :----------------------------------------------------- |
 | `ibge_cnae` | CNAE (Classificação Nacional de Atividades Econômicas) |
 
 ### Mapas e Malhas Geográficas
-| Ferramenta | Descrição |
-|:-----------|:----------|
-| `ibge_malhas` | Malhas geográficas (GeoJSON, TopoJSON, SVG) |
+
+| Ferramenta         | Descrição                                            |
+| :----------------- | :--------------------------------------------------- |
+| `ibge_malhas`      | Malhas geográficas (GeoJSON, TopoJSON, SVG)          |
 | `ibge_malhas_tema` | Malhas temáticas (biomas, Amazônia Legal, semiárido) |
 
 ### Saúde
-| Ferramenta | Descrição |
-|:-----------|:----------|
+
+| Ferramenta       | Descrição                              |
+| :--------------- | :------------------------------------- |
 | `ibge_datasaude` | Indicadores de saúde via SIDRA do IBGE |
 
 ### Notícias e Calendário
-| Ferramenta | Descrição |
-|:-----------|:----------|
-| `ibge_noticias` | Notícias e releases do IBGE |
+
+| Ferramenta        | Descrição                                   |
+| :---------------- | :------------------------------------------ |
+| `ibge_noticias`   | Notícias e releases do IBGE                 |
 | `ibge_calendario` | Calendário de divulgações e coletas do IBGE |
 
 ## Qual ferramenta usar?
@@ -114,30 +125,30 @@ Com 22 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as s
 
 ### População e demografia
 
-| Você quer… | Use |
-|:-----------|:----|
-| População do Brasil agora (tempo real) | `ibge_populacao` |
-| Painel de um único município/UF (população, IDH, PIB…) | `ibge_cidades` |
-| Dados censitários ou série histórica (1970–2022) | `ibge_censo` |
-| Ranquear/comparar 2–10 localidades num indicador | `ibge_comparar` |
+| Você quer…                                                 | Use                |
+| :--------------------------------------------------------- | :----------------- |
+| População do Brasil agora (tempo real)                     | `ibge_populacao`   |
+| Painel de um único município/UF (população, PIB etc.)      | `ibge_cidades`     |
+| Dados censitários ou série histórica (1970–2022)           | `ibge_censo`       |
+| Ranquear/comparar 2–10 localidades num indicador           | `ibge_comparar`    |
 | Série temporal de indicador macro (PIB, IPCA, desemprego…) | `ibge_indicadores` |
-| Uma tabela SIDRA específica / controle fino | `ibge_sidra` |
+| Uma tabela SIDRA específica / controle fino                | `ibge_sidra`       |
 
 ### Indicadores econômicos
 
-| Você quer… | Use |
-|:-----------|:----|
+| Você quer…                                         | Use                |
+| :------------------------------------------------- | :----------------- |
 | IPCA, INPC, PIB, desemprego (IBGE, fonte primária) | `ibge_indicadores` |
 
 ### Localidades e códigos
 
-| Você quer… | Use |
-|:-----------|:----|
-| Listar/buscar municípios | `ibge_municipios` |
-| Listar estados | `ibge_estados` |
-| Resolver nome→código em qualquer nível, ou decodificar a estrutura de um código | `ibge_geocodigo` |
-| Ficha completa de uma localidade da qual você já tem o código | `ibge_localidade` |
-| Municípios vizinhos | `ibge_vizinhos` |
+| Você quer…                                                                      | Use               |
+| :------------------------------------------------------------------------------ | :---------------- |
+| Listar/buscar municípios                                                        | `ibge_municipios` |
+| Listar estados                                                                  | `ibge_estados`    |
+| Resolver nome→código em qualquer nível, ou decodificar a estrutura de um código | `ibge_geocodigo`  |
+| Ficha completa de uma localidade da qual você já tem o código                   | `ibge_localidade` |
+| Municípios vizinhos                                                             | `ibge_vizinhos`   |
 
 ### Fluxo SIDRA
 
@@ -145,9 +156,9 @@ Descobrir → inspecionar → consultar: `ibge_pesquisas` / `ibge_sidra_tabelas`
 
 ### Mapas (malhas)
 
-| Você quer… | Use |
-|:-----------|:----|
-| Contornos administrativos (Brasil/região/UF/município) | `ibge_malhas` |
+| Você quer…                                                                  | Use                |
+| :-------------------------------------------------------------------------- | :----------------- |
+| Contornos administrativos (Brasil/região/UF/município)                      | `ibge_malhas`      |
 | Áreas temáticas (biomas, Amazônia Legal, semiárido, regiões metropolitanas) | `ibge_malhas_tema` |
 
 ## Instalação
@@ -456,6 +467,9 @@ npm run watch
 # Executar testes
 npm test
 
+# smoke test real contra APIs públicas (não usa mocks)
+npm run test:live
+
 # Executar testes em modo watch
 npm run test:watch
 
@@ -546,6 +560,7 @@ Este projeto mantém altos padrões de qualidade de código:
 - **CI/CD automatizado** via GitHub Actions
 
 Execute os testes localmente:
+
 ```bash
 # Rodar todos os testes
 npm test
