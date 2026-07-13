@@ -36,3 +36,8 @@ export { ibgeDatasaude, datasaudeSchema, datasaudeOutputSchema } from "./datasau
 export { ibgePaises, paisesSchema, paisesOutputSchema } from "./paises.js";
 export { ibgeCidades, cidadesSchema, cidadesOutputSchema } from "./cidades.js";
 export { ibgeCidadesLote, cidadesLoteSchema, cidadesLoteOutputSchema } from "./cidades-lote.js";
+export {
+  ibgeResolverMunicipiosLote,
+  resolverMunicipiosLoteSchema,
+  resolverMunicipiosLoteOutputSchema,
+} from "./resolver-municipios-lote.js";

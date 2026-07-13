@@ -80,6 +80,9 @@ import {
   cidadesLoteSchema,
   cidadesLoteOutputSchema,
   ibgeCidadesLote,
+  resolverMunicipiosLoteSchema,
+  resolverMunicipiosLoteOutputSchema,
+  ibgeResolverMunicipiosLote,
 } from "./tools/index.js";
 
 import { registerResources } from "./resources.js";
@@ -958,11 +961,11 @@ Behavior: read-only and idempotent — a live GET against the public IBGE APIs (
   server.registerTool(
     "ibge_cidades_lote",
     {
-      description: `Queries public municipal indicators for 1–50 IBGE municipality codes in one call.
+      description: `Queries public municipal indicators for 1–200 IBGE municipality codes in one call.
 
 Use this tool for cross-municipality analytical preparation. It retrieves public data only; it does not calculate donation metrics, correlations, potential scores, or causal conclusions.
 
-Available municipal aliases include populacao, area, densidade, pib_per_capita, escolarizacao, mortalidade and salario_medio. Up to 5 indicators can be requested per call. The response preserves numeric values, units, reference years, partial-result status and per-item failures. IDH code 30255 is national and is deliberately rejected for municipality codes.
+Available municipal aliases include populacao, area, densidade, pib_per_capita, escolarizacao, mortalidade and salario_medio. Up to 5 indicators can be requested per call. Each indicator is fetched in one official batch request for the municipality list. The response preserves numeric values, units, reference years, partial-result status and per-item failures. IDH code 30255 is national and is deliberately rejected for municipality codes.
 
 Important: salario_medio means average monthly salary of formal workers and is expressed in minimum wages; it is a proxy, not household income.
 
@@ -972,6 +975,21 @@ Behavior: read-only and idempotent — live GET requests against public IBGE API
       annotations: READ_ONLY,
     },
     async (args) => toMcpResult(await ibgeCidadesLote(args))
+  );
+
+  server.registerTool(
+    "ibge_resolver_municipios_lote",
+    {
+      description: `Resolves up to 200 municipality name + UF pairs against the complete official IBGE municipality catalog.
+
+Returns exact, ambiguous or not-found status, normalized name, official municipality name and IBGE code. Matching is accent-, case- and punctuation-insensitive but never guesses fuzzy matches.
+
+Use this tool to validate internal territorial labels before joining them to public municipal indicators. It does not access donation data and does not persist mappings.`,
+      inputSchema: resolverMunicipiosLoteSchema.shape,
+      outputSchema: resolverMunicipiosLoteOutputSchema.shape,
+      annotations: READ_ONLY,
+    },
+    async (args) => toMcpResult(await ibgeResolverMunicipiosLote(args))
   );
 
   // Reference catalogs (roadmap 1.6) and analysis templates

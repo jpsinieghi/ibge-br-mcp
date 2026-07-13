@@ -75,10 +75,11 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ### Dados Municipais (Cidades@)
 
-| Ferramenta          | Descrição                                                                    |
-| :------------------ | :--------------------------------------------------------------------------- |
-| `ibge_cidades`      | Indicadores de um município; o código 30255 de IDH é nacional, não municipal |
-| `ibge_cidades_lote` | Até 5 indicadores públicos para até 50 códigos IBGE municipais por chamada   |
+| Ferramenta                      | Descrição                                                                       |
+| :------------------------------ | :------------------------------------------------------------------------------ |
+| `ibge_cidades`                  | Indicadores de um município; o código 30255 de IDH é nacional, não municipal    |
+| `ibge_cidades_lote`             | Até 5 indicadores públicos para até 200 códigos IBGE municipais por chamada     |
+| `ibge_resolver_municipios_lote` | Resolve até 200 pares município + UF para código IBGE sem correspondência fuzzy |
 
 ### Dados Internacionais
 

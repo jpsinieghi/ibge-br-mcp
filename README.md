@@ -75,10 +75,11 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ### Municipal Data (Cidades@)
 
-| Tool                | Description                                                             |
-| :------------------ | :---------------------------------------------------------------------- |
-| `ibge_cidades`      | Municipal indicators; HDI code 30255 is national, not municipal         |
-| `ibge_cidades_lote` | Up to 5 public indicators for up to 50 IBGE municipality codes per call |
+| Tool                            | Description                                                                                 |
+| :------------------------------ | :------------------------------------------------------------------------------------------ |
+| `ibge_cidades`                  | Municipal indicators; HDI code 30255 is national, not municipal                             |
+| `ibge_cidades_lote`             | Up to 5 public indicators for up to 200 IBGE municipality codes per call                    |
+| `ibge_resolver_municipios_lote` | Resolves up to 200 municipality + state pairs to official IBGE codes without fuzzy matching |
 
 ### International Data
 

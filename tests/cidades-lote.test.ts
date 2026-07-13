@@ -15,8 +15,8 @@ function response(data: unknown): Response {
   } as Response;
 }
 
-function serie(valor: string) {
-  return [{ res: [{ res: { "2022": valor } }] }];
+function serie(valor: string, codigoSeis = "354880") {
+  return [{ res: [{ localidade: codigoSeis, res: { "2022": valor } }] }];
 }
 
 describe("ibge_cidades_lote", () => {
@@ -44,9 +44,7 @@ describe("ibge_cidades_lote", () => {
   });
 
   it("retorna falhas parciais sem perder os sucessos", async () => {
-    mockFetch
-      .mockResolvedValueOnce(response(serie("587486")))
-      .mockRejectedValueOnce(new Error("upstream indisponível"));
+    mockFetch.mockResolvedValueOnce(response(serie("587486", "420540")));
     const result = await ibgeCidadesLote({
       municipios: ["4205407", "3548807"],
       indicadores: ["populacao"],

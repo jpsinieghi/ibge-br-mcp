@@ -2,14 +2,17 @@ import { z } from "zod";
 import { withMetrics } from "../metrics.js";
 import { createMarkdownTable } from "../utils/index.js";
 import type { StructuredToolResult } from "../structured.js";
-import { consultarUltimoValor, INDICADORES_CIDADES } from "./cidades.js";
+import { INDICADORES_CIDADES } from "./cidades.js";
+import { IBGE_API, type PesquisaResultado } from "../types.js";
+import { cacheKey, CACHE_TTL, cachedFetch } from "../cache.js";
+import { formatNumber } from "../utils/index.js";
 
 export const cidadesLoteSchema = z.object({
   municipios: z
     .array(z.string().regex(/^\d{7}$/))
     .min(1)
-    .max(50)
-    .describe("Lista de 1 a 50 códigos IBGE municipais, com 7 dígitos"),
+    .max(200)
+    .describe("Lista de 1 a 200 códigos IBGE municipais, com 7 dígitos"),
   indicadores: z
     .array(z.string())
     .min(1)
@@ -58,27 +61,27 @@ export async function ibgeCidadesLote(input: CidadesLoteInput): Promise<Structur
     const itens: Array<z.infer<typeof itemSchema>> = [];
     const erros: Array<{ municipio: string; alias: string; motivo: string }> = [];
 
-    // Limita concorrência para não pressionar a API pública nem multiplicar retries.
-    for (let i = 0; i < tarefas.length; i += 10) {
-      const bloco = tarefas.slice(i, i + 10);
-      const resultados = await Promise.allSettled(
-        bloco.map(({ municipio, alias }) => consultarUltimoValor(alias, municipio))
-      );
-      resultados.forEach((resultado, index) => {
-        const tarefa = bloco[index];
-        if (resultado.status === "fulfilled") {
-          itens.push({ municipio: tarefa.municipio, ...resultado.value });
-        } else {
+    // A API aceita códigos separados por |. Assim, cada indicador usa uma única
+    // requisição para todo o lote, em vez de uma requisição por município.
+    const resultados = await Promise.allSettled(
+      indicadores.map((alias) => consultarIndicadorEmLote(alias, municipios))
+    );
+    resultados.forEach((resultado, index) => {
+      const alias = indicadores[index];
+      if (resultado.status === "fulfilled") {
+        itens.push(...resultado.value.itens);
+        erros.push(...resultado.value.erros);
+      } else {
+        for (const municipio of municipios) {
           erros.push({
-            ...tarefa,
+            municipio,
+            alias,
             motivo:
-              resultado.reason instanceof Error
-                ? resultado.reason.message
-                : "Falha desconhecida na fonte pública",
+              resultado.reason instanceof Error ? resultado.reason.message : "Falha desconhecida",
           });
         }
-      });
-    }
+      }
+    });
 
     let markdown = `## Indicadores municipais em lote\n\n`;
     markdown += `Retornados ${itens.length} de ${tarefas.length} pares município/indicador.\n\n`;
@@ -104,4 +107,54 @@ export async function ibgeCidadesLote(input: CidadesLoteInput): Promise<Structur
       },
     };
   });
+}
+
+async function consultarIndicadorEmLote(alias: string, municipios: string[]) {
+  const info = INDICADORES_CIDADES[alias];
+  if (info.nivel === "brasil") {
+    throw new Error(`O indicador ${info.id} não possui resultado municipal`);
+  }
+  const codigos = municipios.join("|");
+  const url = `${IBGE_API.PESQUISAS}/${info.pesquisa}/indicadores/${info.id}/resultados/${codigos}`;
+  const data = await cachedFetch<PesquisaResultado[]>(url, cacheKey(url), CACHE_TTL.MEDIUM);
+  const series = data?.[0]?.res || [];
+  const porCodigoSeis = new Map(series.map((item) => [item.localidade, item.res]));
+  const itens: Array<z.infer<typeof itemSchema>> = [];
+  const erros: Array<{ municipio: string; alias: string; motivo: string }> = [];
+
+  for (const municipio of municipios) {
+    const serie = porCodigoSeis.get(municipio.slice(0, 6));
+    const entry = serie
+      ? Object.entries(serie)
+          .filter(([, value]) => value !== null && value !== "-" && value !== "...")
+          .sort(([a], [b]) => b.localeCompare(a))[0]
+      : undefined;
+    if (!entry) {
+      erros.push({ municipio, alias, motivo: "Fonte pública não retornou valor utilizável" });
+      continue;
+    }
+    const [ano, raw] = entry;
+    const parsed = Number(raw);
+    const numero = Number.isFinite(parsed) ? parsed : null;
+    let valor = String(raw);
+    if (numero !== null) {
+      if (info.unidade === "R$") valor = `R$ ${formatNumber(numero, { maximumFractionDigits: 2 })}`;
+      else if (info.unidade === "índice")
+        valor = formatNumber(numero, { maximumFractionDigits: 3 });
+      else valor = `${formatNumber(numero, { maximumFractionDigits: 2 })} ${info.unidade}`;
+    }
+    itens.push({
+      municipio,
+      alias,
+      indicador_id: info.id,
+      nome: info.nome,
+      valor,
+      valor_numerico: numero,
+      unidade: info.unidade,
+      pesquisa: info.pesquisa,
+      fonte: "IBGE",
+      ano,
+    });
+  }
+  return { itens, erros };
 }
