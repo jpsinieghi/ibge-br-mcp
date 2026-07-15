@@ -42,6 +42,11 @@ export {
   populacaoFaixaEtariaMunicipiosLoteOutputSchema,
 } from "./populacao-por-faixa-etaria-municipios-lote.js";
 export {
+  ibgeReligiaoMunicipiosLote,
+  religiaoMunicipiosLoteSchema,
+  religiaoMunicipiosLoteOutputSchema,
+} from "./religiao-municipios-lote.js";
+export {
   ibgeResolverMunicipiosLote,
   resolverMunicipiosLoteSchema,
   resolverMunicipiosLoteOutputSchema,

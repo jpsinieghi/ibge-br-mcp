@@ -26,10 +26,11 @@ describe("MCP server protocol surface", () => {
     it("marks every tool read-only, idempotent, and open-world", async () => {
       const { tools } = await client.listTools();
 
-      expect(tools).toHaveLength(25);
+      expect(tools).toHaveLength(26);
       expect(tools.map((tool) => tool.name)).toContain(
         "ibge_populacao_por_faixa_etaria_municipios_lote"
       );
+      expect(tools.map((tool) => tool.name)).toContain("ibge_religiao_municipios_lote");
       for (const tool of tools) {
         expect(tool.annotations, `tool ${tool.name} missing annotations`).toBeDefined();
         expect(tool.annotations?.readOnlyHint, `tool ${tool.name}`).toBe(true);
@@ -88,7 +89,8 @@ describe("MCP server protocol surface", () => {
         arguments: { localidades: "São Paulo, Rio de Janeiro", indicador: "pib" },
       });
 
-      const text = result.messages[0].content.type === "text" ? result.messages[0].content.text : "";
+      const text =
+        result.messages[0].content.type === "text" ? result.messages[0].content.text : "";
       expect(text).toContain("São Paulo, Rio de Janeiro");
       expect(text).toContain("pib");
       expect(text).toContain("ibge_comparar");
@@ -100,7 +102,8 @@ describe("MCP server protocol surface", () => {
         arguments: { localidades: "35,33" },
       });
 
-      const text = result.messages[0].content.type === "text" ? result.messages[0].content.text : "";
+      const text =
+        result.messages[0].content.type === "text" ? result.messages[0].content.text : "";
       expect(text).toContain("populacao");
     });
   });

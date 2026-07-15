@@ -37,6 +37,7 @@ const SIDRA_TABLE_DESCRIPTIONS: Record<keyof typeof SIDRA_TABLES, string> = {
   IPCA_ACUMULADO: "IPCA — acumulado",
   ALFABETIZACAO: "Taxa de alfabetização",
   DOMICILIOS: "Domicílios",
+  RELIGIAO_CENSO_2022: "Religião — Censo 2022 (pessoas de 10 anos ou mais)",
 };
 
 /** Brazilian states with their IBGE code, name, and region. */

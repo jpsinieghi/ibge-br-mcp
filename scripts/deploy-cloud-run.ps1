@@ -42,6 +42,30 @@ function Add-Argument {
   }
 }
 
+function Read-DotEnv {
+  param([string]$Path)
+
+  $values = @{}
+  if (-not (Test-Path -LiteralPath $Path)) {
+    return $values
+  }
+
+  foreach ($rawLine in Get-Content -LiteralPath $Path) {
+    $line = $rawLine.Trim()
+    if (-not $line -or $line.StartsWith("#")) { continue }
+    if ($line -notmatch '^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') { continue }
+    $name = $Matches[1]
+    $value = $Matches[2].Trim()
+    if ($value.Length -ge 2 -and (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'")))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    } else {
+      $value = ($value -replace '\s+#.*$', '').Trim()
+    }
+    $values[$name] = $value
+  }
+  return $values
+}
+
 Assert-CommandExists "gcloud"
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -68,6 +92,26 @@ try {
   $envVars.Add("IBGE_MCP_TIMEOUT_MS=$IbgeTimeoutMs")
   if (-not [string]::IsNullOrWhiteSpace($ApiKey)) {
     $envVars.Add("API_KEY=$ApiKey")
+  }
+
+  $dotEnv = Read-DotEnv (Join-Path $root ".env")
+  $langfuseDefaults = @{
+    LANGFUSE_BASE_URL = "https://cloud.langfuse.com"
+    LANGFUSE_TRACING_ENVIRONMENT = $AppVersion
+  }
+  $secretNames = @($SetSecrets | ForEach-Object { ($_ -split '=', 2)[0] })
+  foreach ($name in @("LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL", "LANGFUSE_TRACING_ENVIRONMENT")) {
+    if ($secretNames -contains $name) { continue }
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ([string]::IsNullOrWhiteSpace($value) -and $dotEnv.ContainsKey($name)) {
+      $value = [string]$dotEnv[$name]
+    }
+    if ([string]::IsNullOrWhiteSpace($value) -and $langfuseDefaults.ContainsKey($name)) {
+      $value = [string]$langfuseDefaults[$name]
+    }
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+      $envVars.Add("$name=$value")
+    }
   }
   foreach ($item in $SetEnvVars) {
     if (-not [string]::IsNullOrWhiteSpace($item)) {

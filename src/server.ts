@@ -83,6 +83,9 @@ import {
   populacaoFaixaEtariaMunicipiosLoteSchema,
   populacaoFaixaEtariaMunicipiosLoteOutputSchema,
   ibgePopulacaoFaixaEtariaMunicipiosLote,
+  religiaoMunicipiosLoteSchema,
+  religiaoMunicipiosLoteOutputSchema,
+  ibgeReligiaoMunicipiosLote,
   resolverMunicipiosLoteSchema,
   resolverMunicipiosLoteOutputSchema,
   ibgeResolverMunicipiosLote,
@@ -271,6 +274,7 @@ SIDRA contains data from IBGE surveys like Census, PNAD, GDP, etc.
 Common tables:
 - 6579: Population estimates (annual)
 - 9514: Census 2022 population
+- 9537: Census 2022 religion for people aged 10 or older
 - 200: Census population (1970-2010)
 - 4714: Unemployment rate (PNAD Contínua)
 - 6381: Average income (PNAD Contínua)
@@ -288,6 +292,7 @@ Examples:
 - Brazil population 2023: tabela="6579", periodos="2023"
 - Population by state: tabela="6579", nivel_territorial="3"
 - Census 2022 by municipality: tabela="9514", nivel_territorial="6", localidades="3550308"
+- Census 2022 religion by municipality: prefer ibge_religiao_municipios_lote
 
 ibge_sidra is the low-level engine. Prefer a friendlier wrapper when it fits:
 - Census themes (1970–2022) → ibge_censo
@@ -431,6 +436,7 @@ Use this tool to understand table structure BEFORE querying data with ibge_sidra
 Examples:
 - Population table metadata: tabela="6579"
 - Census 2022 metadata: tabela="9514"
+- Census 2022 religion metadata: tabela="9537"
 - PNAD unemployment: tabela="4714"
 
 Use this after finding a table code (ibge_sidra_tabelas) and before querying with ibge_sidra.
@@ -1010,6 +1016,23 @@ Behavior: read-only and idempotent — live GET requests against the official IB
       annotations: READ_ONLY,
     },
     async (args) => toMcpResult(await ibgePopulacaoFaixaEtariaMunicipiosLote(args))
+  );
+
+  server.registerTool(
+    "ibge_religiao_municipios_lote",
+    {
+      description: `Queries religion counts and percentages for 1–200 municipalities using official IBGE Census 2022 SIDRA table 9537.
+
+The default group is Católica Apostólica Romana. Up to 5 official broad religion groups can be requested per call. Results include the population aged 10 or older, group counts, percentages of that same 10+ population, year, source, table and preliminary-sample status.
+
+Use this tool for municipal religious context. Do not treat the percentage as an adult-only measure: Census 2022 religion results use people aged 10 or older. The published municipal categories are broad groups, not specific denominations. This tool provides public denominators and context only; it does not access donation data or calculate donor penetration.
+
+Behavior: read-only and idempotent — live GET requests against the official IBGE SIDRA API.`,
+      inputSchema: religiaoMunicipiosLoteSchema.shape,
+      outputSchema: religiaoMunicipiosLoteOutputSchema.shape,
+      annotations: READ_ONLY,
+    },
+    async (args) => toMcpResult(await ibgeReligiaoMunicipiosLote(args))
   );
 
   // Reference catalogs (roadmap 1.6) and analysis templates

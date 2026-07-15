@@ -8,6 +8,8 @@
  * - Response sizes
  */
 
+import { summarizeForObservation, withObservation } from "./observability.js";
+
 export interface MetricEntry {
   timestamp: number;
   tool: string;
@@ -276,9 +278,33 @@ export async function withMetrics<T>(
   const start = Date.now();
   let success = true;
   let errorType: string | undefined;
+  let responseSize: number | undefined;
 
   try {
-    return await fn();
+    return await withObservation(
+      `mcp.tool.${tool}`,
+      {
+        input: { tool, api: api ?? null },
+        metadata: { tool, api: api ?? null, cached },
+      },
+      async (observation) => {
+        const result = await fn();
+        const returnedError = isErrorResult(result);
+        if (returnedError) {
+          success = false;
+          errorType = "ToolErrorResult";
+        }
+        responseSize = estimateResponseSize(result);
+        observation.update({
+          output: {
+            status: returnedError ? "error" : "ok",
+            responseSize: responseSize ?? null,
+            result: summarizeForObservation(result),
+          },
+        });
+        return result;
+      }
+    );
   } catch (error) {
     success = false;
     errorType = error instanceof Error ? error.name : "UnknownError";
@@ -292,7 +318,22 @@ export async function withMetrics<T>(
       success,
       cached,
       errorType,
+      responseSize,
     });
+  }
+}
+
+function isErrorResult(value: unknown): boolean {
+  return Boolean(
+    value && typeof value === "object" && "isError" in value && value.isError === true
+  );
+}
+
+function estimateResponseSize(value: unknown): number | undefined {
+  try {
+    return Buffer.byteLength(JSON.stringify(value), "utf8");
+  } catch {
+    return undefined;
   }
 }
 

@@ -4,6 +4,7 @@ import { cache } from "../src/cache.js";
 import { ibgeResolverMunicipiosLote } from "../src/tools/resolver-municipios-lote.js";
 import { ibgeCidadesLote } from "../src/tools/cidades-lote.js";
 import { ibgePopulacaoFaixaEtariaMunicipiosLote } from "../src/tools/populacao-por-faixa-etaria-municipios-lote.js";
+import { ibgeReligiaoMunicipiosLote } from "../src/tools/religiao-municipios-lote.js";
 
 const live = process.env.RUN_IBGE_LIVE_TESTS === "1" ? describe : describe.skip;
 
@@ -75,6 +76,23 @@ live("IBGE live smoke tests", () => {
     }>;
     expect(itens[0].populacao_faixa_etaria).toBeGreaterThan(0);
     expect(itens[0].populacao_faixa_etaria).toBeLessThan(itens[0].populacao_total);
+    expect(itens[0].ano).toBe("2022");
+  });
+
+  it("consulta percentual católico municipal com denominador de 10 anos ou mais", async () => {
+    cache.clear();
+    const result = await ibgeReligiaoMunicipiosLote({ municipios: ["3509502"] });
+    expect(result.isError).not.toBe(true);
+    const itens = result.structured?.itens as Array<{
+      populacao_10_anos_ou_mais: number;
+      catolicos_10_anos_ou_mais: number;
+      percentual_catolicos: number;
+      ano: string;
+    }>;
+    expect(itens[0].populacao_10_anos_ou_mais).toBeGreaterThan(0);
+    expect(itens[0].catolicos_10_anos_ou_mais).toBeGreaterThan(0);
+    expect(itens[0].percentual_catolicos).toBeGreaterThan(0);
+    expect(itens[0].percentual_catolicos).toBeLessThanOrEqual(100);
     expect(itens[0].ano).toBe("2022");
   });
 });

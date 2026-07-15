@@ -5,6 +5,12 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { registerAll, SERVER_NAME, SERVER_VERSION } from "./server.js";
+import {
+  initializeObservability,
+  isObservabilityEnabled,
+  shutdownObservability,
+  withTrace,
+} from "./observability.js";
 
 const WEBSITE_URL = "https://github.com/SidneyBissoli/ibge-br-mcp";
 const PORT = Number(process.env.PORT || "8080");
@@ -138,26 +144,35 @@ app.use((_req: MiddlewareRequest, res: MiddlewareResponse, next: () => void) => 
   next();
 });
 
-app.use((req: MiddlewareRequest & { method?: string }, res: MiddlewareResponse, next: () => void) => {
-  if (req.method === "OPTIONS") {
-    res.status(204).end();
-    return;
+app.use(
+  (req: MiddlewareRequest & { method?: string }, res: MiddlewareResponse, next: () => void) => {
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
   }
-  next();
-});
+);
 
 app.get("/health", (_req: MiddlewareRequest, res: MiddlewareResponse) => {
+  res.setHeader("X-Observability-Enabled", String(isObservabilityEnabled()));
   res.type("text/plain").status(200).send("ok");
 });
 
-app.get("/.well-known/mcp/server-card.json", async (_req: MiddlewareRequest, res: MiddlewareResponse) => {
-  try {
-    res.type("application/json").status(200).send(await getServerCard());
-  } catch (error) {
-    console.error("server-card generation failed:", error);
-    res.status(500).json({ error: "server card unavailable" });
+app.get(
+  "/.well-known/mcp/server-card.json",
+  async (_req: MiddlewareRequest, res: MiddlewareResponse) => {
+    try {
+      res
+        .type("application/json")
+        .status(200)
+        .send(await getServerCard());
+    } catch (error) {
+      console.error("server-card generation failed:", error);
+      res.status(500).json({ error: "server card unavailable" });
+    }
   }
-});
+);
 
 app.get("/.well-known/glama.json", (_req: MiddlewareRequest, res: MiddlewareResponse) => {
   res.status(200).json({
@@ -186,8 +201,30 @@ app.all("/mcp", async (req: HttpRequest, res: HttpResponse) => {
   });
 
   try {
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+    await withTrace(
+      {
+        name: "mcp.http.request",
+        input: mcpTraceInput(req.body),
+        metadata: {
+          route: "/mcp",
+          method: req.method,
+          service: SERVER_NAME,
+          version: SERVER_VERSION,
+        },
+        tags: ["mcp", "ibge", "public-data"],
+        sessionId: req.header("mcp-session-id"),
+      },
+      async (observation) => {
+        await server.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+        observation.update({
+          output: {
+            status: res.statusCode >= 400 ? "http_error" : "ok",
+            httpStatus: res.statusCode,
+          },
+        });
+      }
+    );
   } catch (error) {
     console.error("Error handling MCP request:", error);
     if (!res.headersSent) {
@@ -207,6 +244,59 @@ app.use((_req: MiddlewareRequest, res: MiddlewareResponse) => {
   res.status(404).type("text/plain").send(`${SERVER_NAME} - MCP endpoint at /mcp`);
 });
 
-app.listen(PORT, HOST, () => {
-  console.error(`${SERVER_NAME} HTTP listening on ${HOST}:${PORT}`);
+function mcpTraceInput(body: unknown): Record<string, unknown> {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { kind: Array.isArray(body) ? "batch" : typeof body };
+  }
+
+  const message = body as {
+    id?: unknown;
+    method?: unknown;
+    params?: { name?: unknown; arguments?: unknown };
+  };
+  return {
+    id: message.id ?? null,
+    method: message.method ?? null,
+    toolName: message.params?.name ?? null,
+    arguments: message.params?.arguments ?? null,
+  };
+}
+
+async function startServer(): Promise<void> {
+  await initializeObservability({ serverName: SERVER_NAME, serverVersion: SERVER_VERSION });
+
+  const httpServer = app.listen(PORT, HOST, () => {
+    console.error(
+      JSON.stringify({
+        level: "info",
+        message: `${SERVER_NAME} HTTP listening`,
+        host: HOST,
+        port: PORT,
+        version: SERVER_VERSION,
+        observabilityEnabled: isObservabilityEnabled(),
+      })
+    );
+  });
+
+  let shuttingDown = false;
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.error(JSON.stringify({ level: "info", message: "Shutting down", signal }));
+
+    await Promise.all([
+      new Promise<void>((resolve) => httpServer.close(() => resolve())),
+      shutdownObservability(),
+    ]);
+    process.exit(0);
+  };
+
+  process.once("SIGINT", () => void shutdown("SIGINT"));
+  process.once("SIGTERM", () => void shutdown("SIGTERM"));
+}
+
+startServer().catch(async (error) => {
+  console.error("Fatal error:", error);
+  await shutdownObservability().catch(() => undefined);
+  process.exit(1);
 });

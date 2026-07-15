@@ -64,6 +64,10 @@ const CENSO_TABELAS: Record<string, Record<string, { tabela: string; descricao: 
   religiao: {
     "2000": { tabela: "2102", descricao: "População por religião" },
     "2010": { tabela: "2103", descricao: "População por situação, sexo, idade e religião" },
+    "2022": {
+      tabela: "9537",
+      descricao: "Pessoas de 10 anos ou mais por religião, sexo e grupos de idade",
+    },
   },
   // Cor/Raça
   cor_raca: {

@@ -9,7 +9,7 @@
 [![LobeHub](https://lobehub.com/badge/mcp/sidneybissoli-ibge-br-mcp)](https://lobehub.com/mcp/sidneybissoli-ibge-br-mcp)
 [![smithery badge](https://smithery.ai/badge/sidneybissoli/ibge-br-mcp)](https://smithery.ai/server/sidneybissoli/ibge-br-mcp)
 [![ibge-br-mcp MCP server](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp/badges/score.svg)](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp)
-[![Tests](https://img.shields.io/badge/tests-461%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
+[![Tests](https://img.shields.io/badge/tests-470%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![Coverage](https://img.shields.io/badge/coverage-core%2097%25-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/SidneyBissoli/ibge-br-mcp?style=flat&logo=github)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/SidneyBissoli?logo=githubsponsors&label=Sponsor&color=db61a2)](https://github.com/sponsors/SidneyBissoli)
@@ -35,9 +35,10 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ## Recursos
 
-- **25 ferramentas especializadas** cobrindo todos os principais domínios de dados do IBGE
+- **26 ferramentas especializadas** cobrindo todos os principais domínios de dados do IBGE
 - **Resources de referência & prompts de análise** (catálogos MCP + templates prontos)
-- **461 testes automatizados** com 97%+ de cobertura no core
+- **470 testes automatizados** com 97%+ de cobertura no core
+- **Observabilidade opcional com Langfuse**, incluindo requisições MCP, tools, chamadas às APIs do IBGE, cache e erros
 - **Cache automático** com TTL configurável para performance otimizada
 - **Mecanismo de retry** com backoff exponencial para resiliência de rede
 - **Validação abrangente** para todos os parâmetros de entrada
@@ -75,12 +76,13 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ### Dados Municipais (Cidades@)
 
-| Ferramenta                      | Descrição                                                                       |
-| :------------------------------ | :------------------------------------------------------------------------------ |
-| `ibge_cidades`                  | Indicadores de um município; o código 30255 de IDH é nacional, não municipal    |
-| `ibge_cidades_lote`             | Até 5 indicadores públicos para até 200 códigos IBGE municipais por chamada     |
-| `ibge_resolver_municipios_lote` | Resolve até 200 pares município + UF para código IBGE sem correspondência fuzzy |
+| Ferramenta                                        | Descrição                                                                         |
+| :------------------------------------------------ | :-------------------------------------------------------------------------------- |
+| `ibge_cidades`                                    | Indicadores de um município; o código 30255 de IDH é nacional, não municipal      |
+| `ibge_cidades_lote`                               | Até 5 indicadores públicos para até 200 códigos IBGE municipais por chamada       |
+| `ibge_resolver_municipios_lote`                   | Resolve até 200 pares município + UF para código IBGE sem correspondência fuzzy   |
 | `ibge_populacao_por_faixa_etaria_municipios_lote` | Soma a população de uma faixa etária para até 200 municípios via Censo 2022/SIDRA |
+| `ibge_religiao_municipios_lote`                   | Consulta quantidade e percentual por grande grupo religioso em até 200 municípios |
 
 ### Dados Internacionais
 
@@ -123,19 +125,20 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ## Qual ferramenta usar?
 
-Com 25 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as sobreposições comuns:
+Com 26 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as sobreposições comuns:
 
 ### População e demografia
 
-| Você quer…                                                 | Use                |
-| :--------------------------------------------------------- | :----------------- |
-| População do Brasil agora (tempo real)                     | `ibge_populacao`   |
-| Painel de um único município/UF (população, PIB etc.)      | `ibge_cidades`     |
-| Dados censitários ou série histórica (1970–2022)           | `ibge_censo`       |
-| Ranquear/comparar 2–10 localidades num indicador           | `ibge_comparar`    |
-| Série temporal de indicador macro (PIB, IPCA, desemprego…) | `ibge_indicadores` |
-| Uma tabela SIDRA específica / controle fino                | `ibge_sidra`       |
-| População de uma faixa etária em até 200 municípios        | `ibge_populacao_por_faixa_etaria_municipios_lote` |
+| Você quer…                                                            | Use                                               |
+| :-------------------------------------------------------------------- | :------------------------------------------------ |
+| População do Brasil agora (tempo real)                                | `ibge_populacao`                                  |
+| Painel de um único município/UF (população, PIB etc.)                 | `ibge_cidades`                                    |
+| Dados censitários ou série histórica (1970–2022)                      | `ibge_censo`                                      |
+| Ranquear/comparar 2–10 localidades num indicador                      | `ibge_comparar`                                   |
+| Série temporal de indicador macro (PIB, IPCA, desemprego…)            | `ibge_indicadores`                                |
+| Uma tabela SIDRA específica / controle fino                           | `ibge_sidra`                                      |
+| População de uma faixa etária em até 200 municípios                   | `ibge_populacao_por_faixa_etaria_municipios_lote` |
+| Percentual de católicos ou outro grande grupo religioso por município | `ibge_religiao_municipios_lote`                   |
 
 ### Indicadores econômicos
 
@@ -192,6 +195,27 @@ npm run build
 ```
 
 ## Configuração
+
+### Observabilidade com Langfuse
+
+Copie `.env.example` para `.env` e configure:
+
+```env
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_TRACING_ENVIRONMENT=development
+```
+
+O `.env` real é ignorado pelo Git e pelo upload de código-fonte ao Cloud Run. Sem as duas credenciais, o servidor continua funcionando normalmente com observabilidade desabilitada.
+
+O tracing registra uma trace por requisição MCP HTTP, uma observação por tool e observações das chamadas às APIs públicas do IBGE, incluindo cache hit, status HTTP, duração, tamanho aproximado da resposta e falhas retornadas como `isError`. Credenciais, tokens e identificadores pessoais conhecidos são removidos, e entradas ou saídas grandes são resumidas.
+
+Os scripts de deploy carregam o `.env` automaticamente. Em produção, prefira mapear `LANGFUSE_SECRET_KEY` pelo Secret Manager usando o parâmetro `SetSecrets` do script PowerShell.
+
+```bat
+scripts\deploy-env.cmd dev fundacao-clube-ai us-central1
+```
 
 ### Claude Desktop
 
@@ -296,6 +320,22 @@ ibge_populacao_por_faixa_etaria_municipios_lote(
 ```
 
 O resultado usa o Censo 2022. Para uma faixa fechada, informe também `idade_maxima`.
+
+### ibge_religiao_municipios_lote
+
+Consulta quantidade e percentual de pessoas de 10 anos ou mais por grande grupo religioso na tabela SIDRA 9537 do Censo 2022.
+
+```
+# Percentual de católicos em Campinas
+ibge_religiao_municipios_lote(
+  municipios=["3509502"],
+  grupos_religiosos=["catolica_apostolica_romana"]
+)
+```
+
+Aceita até 200 municípios e até 5 grupos por chamada. Os grupos disponíveis são `catolica_apostolica_romana`, `evangelicas`, `espirita`, `umbanda_e_candomble`, `tradicoes_indigenas`, `outras_religiosidades`, `sem_religiao`, `nao_sabe` e `sem_declaracao`.
+
+Os resultados são preliminares da amostra. O percentual usa como denominador a população de 10 anos ou mais e não deve ser apresentado como percentual da população adulta ou da população total.
 
 ### ibge_paises
 
@@ -555,7 +595,7 @@ ibge-br-mcp/
 
 ## Testes
 
-O projeto inclui uma suíte de testes abrangente com 461 testes cobrindo:
+O projeto inclui uma suíte de testes abrangente com 470 testes cobrindo:
 
 - Funções de validação
 - Mecanismo de retry
@@ -572,7 +612,7 @@ npm test
 
 Este projeto mantém altos padrões de qualidade de código:
 
-- **461 testes automatizados** cobrindo validação, cache, retry, formatação e integrações
+- **470 testes automatizados** cobrindo validação, cache, retry, formatação e integrações
 - **97%+ de cobertura de testes** nos módulos core (cache, validation, errors, types)
 - **ESLint** para linting de código sem warnings
 - **Prettier** para formatação consistente

@@ -3,6 +3,7 @@
  */
 
 import { fetchWithRetry, type RetryOptions } from "./retry.js";
+import { withObservation } from "./observability.js";
 
 interface CacheEntry<T> {
   data: T;
@@ -126,23 +127,43 @@ export async function cachedFetch<T>(
   ttlMinutes?: number,
   retryOptions?: RetryOptions
 ): Promise<T> {
-  // Check cache first
-  const cached = cache.get<T>(cacheKeyStr);
-  if (cached !== null) {
-    return cached;
+  return withObservation(
+    "ibge.api.request",
+    {
+      input: observationTarget(url),
+      metadata: { ttlMinutes: ttlMinutes ?? null },
+    },
+    async (observation) => {
+      const cached = cache.get<T>(cacheKeyStr);
+      if (cached !== null) {
+        observation.update({ output: { status: "ok", cacheHit: true } });
+        return cached;
+      }
+
+      const response = await fetchWithRetry(url, undefined, retryOptions);
+      if (!response.ok) {
+        observation.update({
+          output: { status: "http_error", cacheHit: false, httpStatus: response.status },
+        });
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as T;
+      cache.set(cacheKeyStr, data, ttlMinutes);
+      observation.update({
+        output: { status: "ok", cacheHit: false, httpStatus: response.status },
+      });
+      return data;
+    }
+  );
+}
+
+function observationTarget(url: string): { origin: string; endpoint: string } {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split("/").filter(Boolean).slice(0, 4);
+    return { origin: parsed.origin, endpoint: `/${parts.join("/")}` };
+  } catch {
+    return { origin: "invalid-url", endpoint: "[redacted]" };
   }
-
-  // Fetch from API with retry support
-  const response = await fetchWithRetry(url, undefined, retryOptions);
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  const data = (await response.json()) as T;
-
-  // Store in cache
-  cache.set(cacheKeyStr, data, ttlMinutes);
-
-  return data;
 }

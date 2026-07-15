@@ -9,7 +9,7 @@
 [![LobeHub](https://lobehub.com/badge/mcp/sidneybissoli-ibge-br-mcp)](https://lobehub.com/mcp/sidneybissoli-ibge-br-mcp)
 [![smithery badge](https://smithery.ai/badge/sidneybissoli/ibge-br-mcp)](https://smithery.ai/server/sidneybissoli/ibge-br-mcp)
 [![ibge-br-mcp MCP server](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp/badges/score.svg)](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp)
-[![Tests](https://img.shields.io/badge/tests-461%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
+[![Tests](https://img.shields.io/badge/tests-470%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![Coverage](https://img.shields.io/badge/coverage-core%2097%25-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/SidneyBissoli/ibge-br-mcp?style=flat&logo=github)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/SidneyBissoli?logo=githubsponsors&label=Sponsor&color=db61a2)](https://github.com/sponsors/SidneyBissoli)
@@ -35,9 +35,10 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ## Features
 
-- **25 specialized tools** covering all major IBGE data domains
+- **26 specialized tools** covering all major IBGE data domains
 - **Reference resources & analysis prompts** (MCP catalogs + ready-made templates)
-- **461 automated tests** with 97%+ core coverage
+- **470 automated tests** with 97%+ core coverage
+- **Optional Langfuse observability** for MCP requests, tools, IBGE API calls, cache behavior, and errors
 - **Automatic caching** with configurable TTL for optimal performance
 - **Retry mechanism** with exponential backoff for network resilience
 - **Comprehensive validation** for all input parameters
@@ -75,12 +76,13 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ### Municipal Data (Cidades@)
 
-| Tool                            | Description                                                                                 |
-| :------------------------------ | :------------------------------------------------------------------------------------------ |
-| `ibge_cidades`                  | Municipal indicators; HDI code 30255 is national, not municipal                             |
-| `ibge_cidades_lote`             | Up to 5 public indicators for up to 200 IBGE municipality codes per call                    |
-| `ibge_resolver_municipios_lote` | Resolves up to 200 municipality + state pairs to official IBGE codes without fuzzy matching |
-| `ibge_populacao_por_faixa_etaria_municipios_lote` | Sums an age-range population for up to 200 municipalities via Census 2022/SIDRA |
+| Tool                                              | Description                                                                                 |
+| :------------------------------------------------ | :------------------------------------------------------------------------------------------ |
+| `ibge_cidades`                                    | Municipal indicators; HDI code 30255 is national, not municipal                             |
+| `ibge_cidades_lote`                               | Up to 5 public indicators for up to 200 IBGE municipality codes per call                    |
+| `ibge_resolver_municipios_lote`                   | Resolves up to 200 municipality + state pairs to official IBGE codes without fuzzy matching |
+| `ibge_populacao_por_faixa_etaria_municipios_lote` | Sums an age-range population for up to 200 municipalities via Census 2022/SIDRA             |
+| `ibge_religiao_municipios_lote`                   | Queries counts and percentages by broad religion group for up to 200 municipalities         |
 
 ### International Data
 
@@ -123,19 +125,20 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ## Which tool should I use?
 
-With 25 tools, several can touch the same topic. Quick guide for the common overlaps:
+With 26 tools, several can touch the same topic. Quick guide for the common overlaps:
 
 ### Population & demographics
 
-| You want…                                                 | Use                |
-| :-------------------------------------------------------- | :----------------- |
-| Brazil's population right now (real-time)                 | `ibge_populacao`   |
-| A single municipality/state panel (population, GDP, etc.) | `ibge_cidades`     |
-| Census data or historical series (1970–2022)              | `ibge_censo`       |
-| Rank/compare 2–10 localities on one indicator             | `ibge_comparar`    |
-| A macro indicator time series (GDP, IPCA, unemployment…)  | `ibge_indicadores` |
-| A specific SIDRA table / fine control                     | `ibge_sidra`       |
-| Age-range population for up to 200 municipalities         | `ibge_populacao_por_faixa_etaria_municipios_lote` |
+| You want…                                                           | Use                                               |
+| :------------------------------------------------------------------ | :------------------------------------------------ |
+| Brazil's population right now (real-time)                           | `ibge_populacao`                                  |
+| A single municipality/state panel (population, GDP, etc.)           | `ibge_cidades`                                    |
+| Census data or historical series (1970–2022)                        | `ibge_censo`                                      |
+| Rank/compare 2–10 localities on one indicator                       | `ibge_comparar`                                   |
+| A macro indicator time series (GDP, IPCA, unemployment…)            | `ibge_indicadores`                                |
+| A specific SIDRA table / fine control                               | `ibge_sidra`                                      |
+| Age-range population for up to 200 municipalities                   | `ibge_populacao_por_faixa_etaria_municipios_lote` |
+| Catholic or another broad religion-group percentage by municipality | `ibge_religiao_municipios_lote`                   |
 
 ### Economic indicators
 
@@ -192,6 +195,23 @@ npm run build
 ```
 
 ## Configuration
+
+### Langfuse observability
+
+Copy `.env.example` to `.env` and configure:
+
+```env
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_TRACING_ENVIRONMENT=development
+```
+
+The real `.env` is ignored by Git and by the Cloud Run source upload. Without both credentials, the server continues normally with observability disabled.
+
+Tracing records one trace per HTTP MCP request, one observation per tool, and IBGE API calls with cache status, HTTP status, duration, response size, and failures returned as `isError`. Known credentials and personal identifiers are redacted, and large payloads are summarized.
+
+Deployment scripts load `.env` automatically. For production, prefer mapping `LANGFUSE_SECRET_KEY` through Secret Manager with the PowerShell script's `SetSecrets` parameter.
 
 ### Claude Desktop
 
@@ -296,6 +316,22 @@ ibge_populacao_por_faixa_etaria_municipios_lote(
 ```
 
 The result uses Census 2022. Provide `idade_maxima` for a closed range.
+
+### ibge_religiao_municipios_lote
+
+Queries counts and percentages of people aged 10 or older by broad religion group from Census 2022 SIDRA table 9537.
+
+```
+# Catholic percentage in Campinas
+ibge_religiao_municipios_lote(
+  municipios=["3509502"],
+  grupos_religiosos=["catolica_apostolica_romana"]
+)
+```
+
+Accepts up to 200 municipalities and up to 5 groups per call. Available groups are `catolica_apostolica_romana`, `evangelicas`, `espirita`, `umbanda_e_candomble`, `tradicoes_indigenas`, `outras_religiosidades`, `sem_religiao`, `nao_sabe`, and `sem_declaracao`.
+
+These are preliminary sample results. The percentage denominator is the population aged 10 or older and must not be presented as a percentage of adults or of the total population.
 
 ### ibge_paises
 
@@ -552,7 +588,7 @@ ibge-br-mcp/
 
 ## Testing
 
-The project includes a comprehensive test suite with 461 tests covering:
+The project includes a comprehensive test suite with 470 tests covering:
 
 - Validation functions
 - Retry mechanism
@@ -569,7 +605,7 @@ npm test
 
 This project maintains high code quality standards:
 
-- **461 automated tests** covering validation, caching, retry logic, formatting, and integrations
+- **470 automated tests** covering validation, caching, retry logic, formatting, and integrations
 - **97%+ test coverage** on core modules (cache, validation, errors, types)
 - **ESLint** for code linting with zero warnings
 - **Prettier** for consistent code formatting

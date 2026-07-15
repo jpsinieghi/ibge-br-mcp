@@ -22,6 +22,27 @@ export const REQUEST_TIMEOUT_MS = ((): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_REQUEST_TIMEOUT_MS;
 })();
 
+export interface ObservabilityConfig {
+  publicKey?: string;
+  secretKey?: string;
+  baseUrl: string;
+  tracingEnvironment: string;
+  appVersion: string;
+}
+
+export function getObservabilityConfig(): ObservabilityConfig {
+  const appVersion = process.env.APP_VERSION || "local-dev";
+  return {
+    publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+    secretKey: process.env.LANGFUSE_SECRET_KEY,
+    baseUrl:
+      process.env.LANGFUSE_BASE_URL || process.env.LANGFUSE_BASEURL || "https://cloud.langfuse.com",
+    tracingEnvironment:
+      process.env.LANGFUSE_TRACING_ENVIRONMENT || process.env.APP_VERSION || "default",
+    appVersion,
+  };
+}
+
 // ============================================================================
 // API Endpoints
 // ============================================================================
@@ -309,6 +330,7 @@ export const SIDRA_TABLES = {
   // Census themes
   ALFABETIZACAO: "4312",
   DOMICILIOS: "4311",
+  RELIGIAO_CENSO_2022: "9537",
 } as const;
 
 // ============================================================================

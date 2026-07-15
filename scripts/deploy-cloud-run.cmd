@@ -18,6 +18,10 @@ set "API_KEY="
 set "PYTHON_PATH="
 set "SERVICE_NAME="
 set "APP_VERSION="
+set "LANGFUSE_PUBLIC_KEY=%LANGFUSE_PUBLIC_KEY%"
+set "LANGFUSE_SECRET_KEY=%LANGFUSE_SECRET_KEY%"
+set "LANGFUSE_BASE_URL=%LANGFUSE_BASE_URL%"
+set "LANGFUSE_TRACING_ENVIRONMENT=%LANGFUSE_TRACING_ENVIRONMENT%"
 
 if /I "%SECOND_ARG%"=="us-central1" (
   set "REGION=%SECOND_ARG%"
@@ -42,8 +46,6 @@ if not "%PYTHON_PATH%"=="" (
 )
 
 set "SERVICE_ACCOUNT_EMAIL=analise-clube@%PROJECT_ID%.iam.gserviceaccount.com"
-set "ENV_VARS=APP_VERSION=%APP_VERSION%,ALLOWED_ORIGIN=*,IBGE_MCP_TIMEOUT_MS=30000"
-if not "%API_KEY%"=="" set "ENV_VARS=%ENV_VARS%,API_KEY=%API_KEY%"
 
 echo Configurando projeto ativo no gcloud...
 call gcloud.cmd config set project "%PROJECT_ID%"
@@ -59,9 +61,25 @@ echo Habilitando APIs necessarias...
 call gcloud.cmd services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
 if errorlevel 1 goto :fail
 
-echo Iniciando deploy no Cloud Run...
-call gcloud.cmd run deploy "%SERVICE_NAME%" --source . --project "%PROJECT_ID%" --region "%REGION%" --platform managed --port 8080 --cpu 1 --memory 512Mi --min-instances 0 --max-instances 3 --service-account "%SERVICE_ACCOUNT_EMAIL%" --set-env-vars "%ENV_VARS%" --allow-unauthenticated --quiet
+call gcloud.cmd run services describe "%SERVICE_NAME%" --project "%PROJECT_ID%" --region "%REGION%" >nul 2>nul
+if not errorlevel 1 (
+  echo Verificando variaveis Langfuse atuais no servico...
+  if "%LANGFUSE_PUBLIC_KEY%"=="" call :loadExistingServiceEnvVar LANGFUSE_PUBLIC_KEY
+  if "%LANGFUSE_SECRET_KEY%"=="" call :loadExistingServiceEnvVar LANGFUSE_SECRET_KEY
+  if "%LANGFUSE_BASE_URL%"=="" call :loadExistingServiceEnvVar LANGFUSE_BASE_URL
+  if "%LANGFUSE_TRACING_ENVIRONMENT%"=="" call :loadExistingServiceEnvVar LANGFUSE_TRACING_ENVIRONMENT
+)
+
+set "DEPLOY_ENV_FILE=%TEMP%\%SERVICE_NAME%-env-%RANDOM%-%RANDOM%.json"
+echo Preparando variaveis do Cloud Run a partir do .env...
+call node "%~dp0build-cloud-run-env.mjs" --output "%DEPLOY_ENV_FILE%" --env-file ".env" --app-version "%APP_VERSION%" --allowed-origin "*" --ibge-timeout-ms "30000" --api-key "%API_KEY%"
 if errorlevel 1 goto :fail
+
+echo Iniciando deploy no Cloud Run...
+call gcloud.cmd run deploy "%SERVICE_NAME%" --source . --project "%PROJECT_ID%" --region "%REGION%" --platform managed --port 8080 --cpu 1 --memory 512Mi --min-instances 0 --max-instances 3 --service-account "%SERVICE_ACCOUNT_EMAIL%" --env-vars-file "%DEPLOY_ENV_FILE%" --allow-unauthenticated --quiet
+if errorlevel 1 goto :fail
+
+call :cleanupDeployEnvFile
 
 echo Obtendo URL publicada...
 for /f "usebackq delims=" %%A in (`gcloud.cmd run services describe "%SERVICE_NAME%" --project "%PROJECT_ID%" --region "%REGION%" --format "value(status.url)"`) do (
@@ -78,8 +96,21 @@ echo Deploy concluido.
 echo URL base : !SERVICE_URL!
 echo MCP endpoint: !SERVICE_URL!/mcp
 echo Health check: !SERVICE_URL!/health
+call :cleanupDeployEnvFile
 endlocal
 exit /b 0
+
+:loadExistingServiceEnvVar
+set "TARGET_ENV_NAME=%~1"
+set "RESOLVED_ENV_VALUE="
+for /f "usebackq delims=" %%A in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'SilentlyContinue'; $service = gcloud.cmd run services describe '%SERVICE_NAME%' --project '%PROJECT_ID%' --region '%REGION%' --format json 2>$null | ConvertFrom-Json; if ($service.spec.template.spec.containers) { $containers = $service.spec.template.spec.containers } elseif ($service.template.containers) { $containers = $service.template.containers }; if ($containers.Count -gt 0) { $item = $containers[0].env | Where-Object { $_.name -eq '%TARGET_ENV_NAME%' } | Select-Object -First 1; if ($item) { [Console]::Write($item.value) } }"`) do (
+  set "RESOLVED_ENV_VALUE=%%A"
+)
+if defined RESOLVED_ENV_VALUE (
+  set "%TARGET_ENV_NAME%=%RESOLVED_ENV_VALUE%"
+  echo Variavel %TARGET_ENV_NAME% preservada a partir do servico atual.
+)
+goto :eof
 
 :usage
 echo Uso recomendado:
@@ -95,5 +126,10 @@ exit /b 1
 :fail
 echo.
 echo O deploy falhou. Veja a mensagem acima para identificar a etapa.
+call :cleanupDeployEnvFile
 endlocal
 exit /b 1
+
+:cleanupDeployEnvFile
+if defined DEPLOY_ENV_FILE if exist "%DEPLOY_ENV_FILE%" del /q "%DEPLOY_ENV_FILE%" >nul 2>nul
+goto :eof
