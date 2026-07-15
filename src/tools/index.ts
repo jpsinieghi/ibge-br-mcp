@@ -37,6 +37,11 @@ export { ibgePaises, paisesSchema, paisesOutputSchema } from "./paises.js";
 export { ibgeCidades, cidadesSchema, cidadesOutputSchema } from "./cidades.js";
 export { ibgeCidadesLote, cidadesLoteSchema, cidadesLoteOutputSchema } from "./cidades-lote.js";
 export {
+  ibgePopulacaoFaixaEtariaMunicipiosLote,
+  populacaoFaixaEtariaMunicipiosLoteSchema,
+  populacaoFaixaEtariaMunicipiosLoteOutputSchema,
+} from "./populacao-por-faixa-etaria-municipios-lote.js";
+export {
   ibgeResolverMunicipiosLote,
   resolverMunicipiosLoteSchema,
   resolverMunicipiosLoteOutputSchema,

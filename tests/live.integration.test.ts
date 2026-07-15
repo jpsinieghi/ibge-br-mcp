@@ -3,6 +3,7 @@ import { ibgeCidades } from "../src/tools/cidades.js";
 import { cache } from "../src/cache.js";
 import { ibgeResolverMunicipiosLote } from "../src/tools/resolver-municipios-lote.js";
 import { ibgeCidadesLote } from "../src/tools/cidades-lote.js";
+import { ibgePopulacaoFaixaEtariaMunicipiosLote } from "../src/tools/populacao-por-faixa-etaria-municipios-lote.js";
 
 const live = process.env.RUN_IBGE_LIVE_TESTS === "1" ? describe : describe.skip;
 
@@ -58,5 +59,22 @@ live("IBGE live smoke tests", () => {
     const structured = result.structured as { total_retornado: number; parcial: boolean };
     expect(structured.total_retornado).toBe(2);
     expect(structured.parcial).toBe(false);
+  });
+
+  it("calcula população de 18 anos ou mais para município via SIDRA", async () => {
+    cache.clear();
+    const result = await ibgePopulacaoFaixaEtariaMunicipiosLote({
+      municipios: ["4205407"],
+      idade_minima: 18,
+    });
+    expect(result.isError).not.toBe(true);
+    const itens = result.structured?.itens as Array<{
+      populacao_faixa_etaria: number;
+      populacao_total: number;
+      ano: string;
+    }>;
+    expect(itens[0].populacao_faixa_etaria).toBeGreaterThan(0);
+    expect(itens[0].populacao_faixa_etaria).toBeLessThan(itens[0].populacao_total);
+    expect(itens[0].ano).toBe("2022");
   });
 });

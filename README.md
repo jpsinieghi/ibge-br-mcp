@@ -9,7 +9,7 @@
 [![LobeHub](https://lobehub.com/badge/mcp/sidneybissoli-ibge-br-mcp)](https://lobehub.com/mcp/sidneybissoli-ibge-br-mcp)
 [![smithery badge](https://smithery.ai/badge/sidneybissoli/ibge-br-mcp)](https://smithery.ai/server/sidneybissoli/ibge-br-mcp)
 [![ibge-br-mcp MCP server](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp/badges/score.svg)](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp)
-[![Tests](https://img.shields.io/badge/tests-456%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
+[![Tests](https://img.shields.io/badge/tests-461%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![Coverage](https://img.shields.io/badge/coverage-core%2097%25-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/SidneyBissoli/ibge-br-mcp?style=flat&logo=github)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/SidneyBissoli?logo=githubsponsors&label=Sponsor&color=db61a2)](https://github.com/sponsors/SidneyBissoli)
@@ -35,9 +35,9 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ## Features
 
-- **22 specialized tools** covering all major IBGE data domains
+- **25 specialized tools** covering all major IBGE data domains
 - **Reference resources & analysis prompts** (MCP catalogs + ready-made templates)
-- **460 automated tests** with 97%+ core coverage
+- **461 automated tests** with 97%+ core coverage
 - **Automatic caching** with configurable TTL for optimal performance
 - **Retry mechanism** with exponential backoff for network resilience
 - **Comprehensive validation** for all input parameters
@@ -80,6 +80,7 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 | `ibge_cidades`                  | Municipal indicators; HDI code 30255 is national, not municipal                             |
 | `ibge_cidades_lote`             | Up to 5 public indicators for up to 200 IBGE municipality codes per call                    |
 | `ibge_resolver_municipios_lote` | Resolves up to 200 municipality + state pairs to official IBGE codes without fuzzy matching |
+| `ibge_populacao_por_faixa_etaria_municipios_lote` | Sums an age-range population for up to 200 municipalities via Census 2022/SIDRA |
 
 ### International Data
 
@@ -122,7 +123,7 @@ The answers come live from the official IBGE APIs — exact figures with the tab
 
 ## Which tool should I use?
 
-With 22 tools, several can touch the same topic. Quick guide for the common overlaps:
+With 25 tools, several can touch the same topic. Quick guide for the common overlaps:
 
 ### Population & demographics
 
@@ -134,6 +135,7 @@ With 22 tools, several can touch the same topic. Quick guide for the common over
 | Rank/compare 2–10 localities on one indicator             | `ibge_comparar`    |
 | A macro indicator time series (GDP, IPCA, unemployment…)  | `ibge_indicadores` |
 | A specific SIDRA table / fine control                     | `ibge_sidra`       |
+| Age-range population for up to 200 municipalities         | `ibge_populacao_por_faixa_etaria_municipios_lote` |
 
 ### Economic indicators
 
@@ -280,6 +282,20 @@ ibge_cidades(tipo="pesquisas")
 ```
 
 **Available indicators:** populacao, area, densidade, pib_per_capita, idh, escolarizacao, mortalidade, salario_medio, receitas, despesas
+
+### ibge_populacao_por_faixa_etaria_municipios_lote
+
+Sums single-year ages from SIDRA table 9514 and returns one safe total per municipality.
+
+```
+# Population aged 18 or older in Florianópolis and São Paulo
+ibge_populacao_por_faixa_etaria_municipios_lote(
+  municipios=["4205407", "3550308"],
+  idade_minima=18
+)
+```
+
+The result uses Census 2022. Provide `idade_maxima` for a closed range.
 
 ### ibge_paises
 
@@ -522,7 +538,10 @@ ibge-br-mcp/
 │       ├── nomes.ts          # ibge_nomes
 │       ├── noticias.ts       # ibge_noticias
 │       ├── paises.ts         # ibge_paises
-│       └── cidades.ts        # ibge_cidades
+│       ├── cidades.ts        # ibge_cidades
+│       ├── cidades-lote.ts   # ibge_cidades_lote
+│       ├── resolver-municipios-lote.ts # ibge_resolver_municipios_lote
+│       └── populacao-por-faixa-etaria-municipios-lote.ts # municipal age range
 ├── tests/                    # Test files
 ├── dist/                     # Compiled files
 ├── package.json
@@ -533,7 +552,7 @@ ibge-br-mcp/
 
 ## Testing
 
-The project includes a comprehensive test suite with 227 tests covering:
+The project includes a comprehensive test suite with 461 tests covering:
 
 - Validation functions
 - Retry mechanism
@@ -550,7 +569,7 @@ npm test
 
 This project maintains high code quality standards:
 
-- **227 automated tests** covering validation, caching, retry logic, formatting, and integrations
+- **461 automated tests** covering validation, caching, retry logic, formatting, and integrations
 - **97%+ test coverage** on core modules (cache, validation, errors, types)
 - **ESLint** for code linting with zero warnings
 - **Prettier** for consistent code formatting

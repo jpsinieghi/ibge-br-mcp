@@ -80,6 +80,9 @@ import {
   cidadesLoteSchema,
   cidadesLoteOutputSchema,
   ibgeCidadesLote,
+  populacaoFaixaEtariaMunicipiosLoteSchema,
+  populacaoFaixaEtariaMunicipiosLoteOutputSchema,
+  ibgePopulacaoFaixaEtariaMunicipiosLote,
   resolverMunicipiosLoteSchema,
   resolverMunicipiosLoteOutputSchema,
   ibgeResolverMunicipiosLote,
@@ -990,6 +993,23 @@ Use this tool to validate internal territorial labels before joining them to pub
       annotations: READ_ONLY,
     },
     async (args) => toMcpResult(await ibgeResolverMunicipiosLote(args))
+  );
+
+  server.registerTool(
+    "ibge_populacao_por_faixa_etaria_municipios_lote",
+    {
+      description: `Calculates resident population in an age range for 1–200 municipalities using official IBGE Census 2022 SIDRA table 9514.
+
+Use idade_minima=18 without idade_maxima for the population aged 18 or older. The tool dynamically validates the official age categories, sums exact ages internally and returns one summary per municipality, including total population, age-range population, percentage, year, source and table.
+
+This tool provides public population denominators only. It does not access donation data and does not calculate donor penetration. Census 2022 is a reference-year count, not a current population estimate.
+
+Behavior: read-only and idempotent — live GET requests against the official IBGE SIDRA API.`,
+      inputSchema: populacaoFaixaEtariaMunicipiosLoteSchema.shape,
+      outputSchema: populacaoFaixaEtariaMunicipiosLoteOutputSchema.shape,
+      annotations: READ_ONLY,
+    },
+    async (args) => toMcpResult(await ibgePopulacaoFaixaEtariaMunicipiosLote(args))
   );
 
   // Reference catalogs (roadmap 1.6) and analysis templates

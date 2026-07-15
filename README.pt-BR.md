@@ -9,7 +9,7 @@
 [![LobeHub](https://lobehub.com/badge/mcp/sidneybissoli-ibge-br-mcp)](https://lobehub.com/mcp/sidneybissoli-ibge-br-mcp)
 [![smithery badge](https://smithery.ai/badge/sidneybissoli/ibge-br-mcp)](https://smithery.ai/server/sidneybissoli/ibge-br-mcp)
 [![ibge-br-mcp MCP server](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp/badges/score.svg)](https://glama.ai/mcp/servers/@SidneyBissoli/ibge-br-mcp)
-[![Tests](https://img.shields.io/badge/tests-456%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
+[![Tests](https://img.shields.io/badge/tests-461%20passed-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![Coverage](https://img.shields.io/badge/coverage-core%2097%25-brightgreen.svg)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/SidneyBissoli/ibge-br-mcp?style=flat&logo=github)](https://github.com/SidneyBissoli/ibge-br-mcp)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/SidneyBissoli?logo=githubsponsors&label=Sponsor&color=db61a2)](https://github.com/sponsors/SidneyBissoli)
@@ -35,9 +35,9 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ## Recursos
 
-- **22 ferramentas especializadas** cobrindo todos os principais domínios de dados do IBGE
+- **25 ferramentas especializadas** cobrindo todos os principais domínios de dados do IBGE
 - **Resources de referência & prompts de análise** (catálogos MCP + templates prontos)
-- **460 testes automatizados** com 97%+ de cobertura no core
+- **461 testes automatizados** com 97%+ de cobertura no core
 - **Cache automático** com TTL configurável para performance otimizada
 - **Mecanismo de retry** com backoff exponencial para resiliência de rede
 - **Validação abrangente** para todos os parâmetros de entrada
@@ -80,6 +80,7 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 | `ibge_cidades`                  | Indicadores de um município; o código 30255 de IDH é nacional, não municipal    |
 | `ibge_cidades_lote`             | Até 5 indicadores públicos para até 200 códigos IBGE municipais por chamada     |
 | `ibge_resolver_municipios_lote` | Resolve até 200 pares município + UF para código IBGE sem correspondência fuzzy |
+| `ibge_populacao_por_faixa_etaria_municipios_lote` | Soma a população de uma faixa etária para até 200 municípios via Censo 2022/SIDRA |
 
 ### Dados Internacionais
 
@@ -122,7 +123,7 @@ As respostas vêm ao vivo das APIs oficiais do IBGE — valores exatos com a tab
 
 ## Qual ferramenta usar?
 
-Com 22 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as sobreposições comuns:
+Com 25 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as sobreposições comuns:
 
 ### População e demografia
 
@@ -134,6 +135,7 @@ Com 22 ferramentas, várias podem tocar no mesmo assunto. Guia rápido para as s
 | Ranquear/comparar 2–10 localidades num indicador           | `ibge_comparar`    |
 | Série temporal de indicador macro (PIB, IPCA, desemprego…) | `ibge_indicadores` |
 | Uma tabela SIDRA específica / controle fino                | `ibge_sidra`       |
+| População de uma faixa etária em até 200 municípios        | `ibge_populacao_por_faixa_etaria_municipios_lote` |
 
 ### Indicadores econômicos
 
@@ -280,6 +282,20 @@ ibge_cidades(tipo="pesquisas")
 ```
 
 **Indicadores disponíveis:** populacao, area, densidade, pib_per_capita, idh, escolarizacao, mortalidade, salario_medio, receitas, despesas
+
+### ibge_populacao_por_faixa_etaria_municipios_lote
+
+Soma idades simples da tabela SIDRA 9514 e devolve um total seguro por município.
+
+```
+# População com 18 anos ou mais em Florianópolis e São Paulo
+ibge_populacao_por_faixa_etaria_municipios_lote(
+  municipios=["4205407", "3550308"],
+  idade_minima=18
+)
+```
+
+O resultado usa o Censo 2022. Para uma faixa fechada, informe também `idade_maxima`.
 
 ### ibge_paises
 
@@ -525,7 +541,10 @@ ibge-br-mcp/
 │       ├── nomes.ts          # ibge_nomes
 │       ├── noticias.ts       # ibge_noticias
 │       ├── paises.ts         # ibge_paises
-│       └── cidades.ts        # ibge_cidades
+│       ├── cidades.ts        # ibge_cidades
+│       ├── cidades-lote.ts   # ibge_cidades_lote
+│       ├── resolver-municipios-lote.ts # ibge_resolver_municipios_lote
+│       └── populacao-por-faixa-etaria-municipios-lote.ts # faixa etária municipal
 ├── tests/                    # Arquivos de teste
 ├── dist/                     # Arquivos compilados
 ├── package.json
@@ -536,7 +555,7 @@ ibge-br-mcp/
 
 ## Testes
 
-O projeto inclui uma suíte de testes abrangente com 227 testes cobrindo:
+O projeto inclui uma suíte de testes abrangente com 461 testes cobrindo:
 
 - Funções de validação
 - Mecanismo de retry
@@ -553,7 +572,7 @@ npm test
 
 Este projeto mantém altos padrões de qualidade de código:
 
-- **227 testes automatizados** cobrindo validação, cache, retry, formatação e integrações
+- **461 testes automatizados** cobrindo validação, cache, retry, formatação e integrações
 - **97%+ de cobertura de testes** nos módulos core (cache, validation, errors, types)
 - **ESLint** para linting de código sem warnings
 - **Prettier** para formatação consistente
